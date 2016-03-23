@@ -130,6 +130,16 @@ public class TreeBuilderTest {
 	}
 	
 	@Test
+	public void rootStrict(){
+		TreeBuilder<Integer> builder = new TreeBuilder<>(TestUtil.raySerialCondition,new LazyRepeatHandler<Integer>());
+		
+		builder.add(1);
+		assertEquals(0,builder.size());
+		builder.add(0);
+		assertEquals(2,builder.size());
+	}
+	
+	@Test
 	public void repeatable(){
 //		TreeNode<Integer> n_0 = new TreeNode<>(0);
 //		TreeNode<Integer> n_1 = new TreeNode<>(1);
