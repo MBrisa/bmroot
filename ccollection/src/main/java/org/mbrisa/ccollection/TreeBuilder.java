@@ -7,13 +7,14 @@ import java.util.List;
 
 public class TreeBuilder<E> {
 	
-	private int size = 0;
+	private int nodeSize = 0;
 	private final LinkCondition<E> condition;
 	private final NodeRepeatHandler<E> conflictHandler;
 	
-	private List<TreeNode<E>> rootNodes = new LinkedList<>();
-	private HashMap<E,List<TreeNode<E>>> log = new HashMap<>();
+	private final List<TreeNode<E>> rootNodes = new LinkedList<>();
+	private final HashMap<E,List<TreeNode<E>>> log = new HashMap<>();
 	private final List<TreeNode<E>> scrap = new ArrayList<>();
+	private final HashMap<E,List<TreeNode<E>>> scrapLog = new HashMap<>();
 	
 	public TreeBuilder(LinkCondition<E> condition) {
 		this(condition, new SingleNodeHandler<E>());
@@ -28,12 +29,13 @@ public class TreeBuilder<E> {
 		if(node == null){ // XXX 如果期望支持对 null 的添加，可以考虑增加 AdditionStrategy ，此时需要考虑 linkStrategy 在连接是对 null 的处理，也要考虑 add(Chain<E> subChain) 方法的处理( subChain 的 AdditionStrategy 是否应该与当前类的 AdditionStrategy 一致).
 			throw new NullPointerException();
 		}
-		if(this.log.get(node) != null && !this.conflictHandler.repeatable()){
+		if((this.log.get(node) != null || this.scrapLog.get(node) != null) && !this.conflictHandler.repeatable()){
 			throw new NodeRepeatException("node was duplicate");
 		}
 		TreeNode<E> addition = new TreeNode<>(node,this.condition);
-		if(toAdd(addition)){
-			reAddOnScrap();
+		AdditionState additionState = toAdd(addition);
+		if(additionState.added()){
+			additionState.rehandle(this,addition);
 			return;
 		}
 		addToScrap(addition);
@@ -41,41 +43,48 @@ public class TreeBuilder<E> {
 	
 	private void addToScrap(TreeNode<E> node){
 		this.scrap.add(node);
-		logNewNode(node);
+		logNewNode(node, this.scrapLog);
 	}
 	
-	private boolean toAdd(TreeNode<E> addition){
-		if(this.condition.headable(addition.entity())){
+	private AdditionState toAdd(TreeNode<E> addition){
+		boolean headable = this.condition.headable(addition.entity());
+		if(headable){
 			if(this.rootNodes.size() == 0){
-				addRoot(addition);
-				return true;
+				upsertRoot(addition, null);
+				return AdditionState.ADD_ONLY; // nod size 为 0 时，不需要进行 tree relink
 			}
 			for(TreeNode<E> rootNode : this.rootNodes){
 				if(this.condition.appendable(addition.entity(),rootNode.entity())){
-					if(selectParentToLink(addition, rootNode)){
-						addRoot(addition);
-						return true;
+					TreeNode<E> realParent = this.selectParent(addition, rootNode);
+					if(realParent == addition){
+						upsertRoot(realParent, rootNode);
+						return AdditionState.TREE_RELINK; //至此，addition 仍就可能成为其它树的根或其它节点的子节点。所以需要进行 tree relink
 					}
 				}
 			}
 		}
 		for(TreeNode<E> rootNode : this.rootNodes){
-			if(tryToChild(rootNode, addition)){
-				return true;
+			if(tryToChild(rootNode, addition, false)){
+				return AdditionState.ADD_ONLY; // 至此,addition 已经明确不能成为根，同时因为一个节点只能由一个父节点，所以其它节点不能在成为 addition 的子，addition 也不能再成为其它节点的子，所以不需要进行 tree relink
 			}
 		}
-		return false;//consider to add strategy : root first or child first ? now is child first.
+		if(headable){
+			assert(this.rootNodes.size() > 0);
+			upsertRoot(addition, null);// 至此,addition 已经明确不能成为其它节点的父或子，同时其它节点也不能成为 addition 的父或子，故亦不需要进行 tree relink
+			return AdditionState.ADD_ONLY;
+		}
+		return AdditionState.NOT_ADD;
 	}
 	
-	private boolean selectParentToLink(TreeNode<E> parent,TreeNode<E> child){
+	private TreeNode<E> selectParent(TreeNode<E> parentArchetype,TreeNode<E> child){
 		TreeNode<E> realParent;
-		List<TreeNode<E>> parentNodeList = this.log.get(parent.entity());
+		List<TreeNode<E>> parentNodeList = this.log.get(parentArchetype.entity());
 		if(this.conflictHandler.repeatable()){
 			List<E> parentList = new ArrayList<>();
 			if(parentNodeList == null){ //param 'parent' is current addition ,
 				parentNodeList = new ArrayList<>();
-				parentNodeList.add(parent);
-				parentList.add(parent.entity());
+				parentNodeList.add(parentArchetype);
+				parentList.add(parentArchetype.entity());
 			}else{
 				for(TreeNode<E> p : parentNodeList){
 					parentList.add(p.entity());
@@ -89,37 +98,45 @@ public class TreeBuilder<E> {
 			}
 		}else{
 			if(parentNodeList == null){ //param 'parent' is current addition ,
-				realParent = parent;
+				realParent = parentArchetype;
 			}else if(parentNodeList.size() > 1){
 				throw new NodeRepeatException();
 			}else{
 				assert(parentNodeList.size() == 1); //在 log 中创建一个 list 的时候同时必然会添加一个元素
 				realParent = parentNodeList.get(0);
-				assert(realParent.equals(parent));
+				assert(realParent.equals(parentArchetype));
 			}
 		}
 		
-		if(realParent == null){
-			return false;
-		}
+		return realParent;
 		
-		return realParent.add(child);
 	}
 	
-	private void addRoot(TreeNode<E> addition){
-		this.rootNodes.clear();this.rootNodes.add(addition);
+	private void upsertRoot(TreeNode<E> addition, TreeNode<E> original){
+		if(original == null){
+			this.rootNodes.add(addition);
+		}else{
+			if(!this.rootNodes.remove(original) || !addition.add(original)){
+				assert(false);// must exist original in rootNodes and must addable
+				throw new RuntimeException("..");
+			}
+			this.rootNodes.add(addition);
+		}
 		added(addition);
 	}
 	
-	private boolean tryToChild(TreeNode<E> parent,TreeNode<E> addition){
+	private boolean tryToChild(TreeNode<E> parent,TreeNode<E> addition, boolean isTreeLink){
 		if(this.condition.appendable(parent.entity(), addition.entity())){
-			if(selectParentToLink(parent,addition)){
-				added(addition);
+			TreeNode<E> realParent = this.selectParent(parent,addition);
+			if(realParent != null && realParent.add(addition)){
+				if(!isTreeLink){
+					added(addition);
+				}
 				return true;
 			}
 		}
 		for(TreeNode<E> sub : parent.children()){
-			if(tryToChild(sub, addition)){
+			if(tryToChild(sub, addition, isTreeLink)){
 				return true;
 			}
 		}
@@ -128,64 +145,174 @@ public class TreeBuilder<E> {
 	
 	
 	private void added(TreeNode<E> addition){
-		logNewNode(addition);
-		this.size += 1;
+		logNewNode(addition, this.log);
+		this.nodeSize += 1;
 	}
 	
-	private void logNewNode(TreeNode<E> node){
-		List<TreeNode<E>> original = this.log.get(node.entity());
+	private void logNewNode(TreeNode<E> node, HashMap<E, List<TreeNode<E>>> continer){
+		List<TreeNode<E>> original = continer.get(node.entity());
 		if(original == null){
 			original = new ArrayList<>();
-			this.log.put(node.entity(), original);
+			continer.put(node.entity(), original);
 		}
 		original.add(node);
 	}
 	
-	private void reAddOnScrap(/*TreeNode<E> lastAddition*/){ //can not use lastAddition,because need to consider to reset the root node with scrap
-		if(this.scrap.size() == 0){
-			return;
-		}
-		for(TreeNode<E> node : this.scrap){
-			if(toAdd(node)){
-				this.scrap.remove(node);
-				reAddOnScrap();
-				return ;
-			}
-		}
-		return;
+//	private void relink(TreeNode<E> lastAddition,AdditionState additionState){
+//		if(additionState == AdditionState.TREE_RELINK){
+//			treeLink(lastAddition);
+//		}
+//		for(TreeNode<E> node : this.scrap){
+//			AdditionState state = toAdd(node);
+//			if(state.added()){
+//				this.scrap.remove(node);
+//				this.scrapLog.get(node.entity()).remove(node);
+//				relink(node,state);
+//				return ;
+//			}
+//		}
+//	}
+	
+	public int treeSize(){
+		return this.rootNodes.size();
 	}
 	
-	public int size(){
-		return this.size;
+	public int nodeSize(){
+		return this.nodeSize;
 	}
 
-	public TreeNode<E> retrieveSilently(E e,int index) {
-		return this.log.get(e).get(index).clone();
-	}
-	
-	public TreeNode<E> retrieve(E e,int index) {
-		if(this.scrap.size() > 0){
-			throw new NoCompleteException();
+	/**
+	 * for unit test
+	 * @param e
+	 * @param index
+	 * @return
+	 */
+	TreeNode<E> getNode(E e,int index) {
+		List<TreeNode<E>> nodeList = this.log.get(e);
+		if(nodeList == null || nodeList.size() <= index){
+			return null;
 		}
-		return retrieveSilently(e, index);
+		return nodeList.get(index).clone();
 	}
 	
-	public TreeNode<E> retrieveRootSilently() {
+	public List<TreeNode<E>> getRoots(){
+		ArrayList<TreeNode<E>> result = new ArrayList<>();
+		for(TreeNode<E> node : this.rootNodes){
+			result.add(node.clone());
+		}
+		return result;
+	}
+	
+	public List<TreeNode<E>> retrieveRoots(){
+		validateScrap();
+		return getRoots();
+	}
+	
+	public TreeNode<E> getFirstRoot() {
+		if(this.rootNodes.size() == 0){
+			return null;
+		}
 		return this.rootNodes.get(0).clone();
 	}
 	
-	public TreeNode<E> retrieveRoot(){
+	public TreeNode<E> retrieveFirstRoot(){
+		validateScrap();
+		return getFirstRoot();
+	}
+	
+	private void validateScrap(){
 		if(this.scrap.size() > 0){
 			throw new NoCompleteException();
 		}
-		return retrieveRootSilently();
 	}
 	
-	public List<E> retrieveScrap(){
+	public List<E> getScrap(){
 		ArrayList<E> result = new ArrayList<>();
 		for(TreeNode<E> node : this.scrap){
 			result.add(node.entity());
 		}
 		return result;
+	}
+	
+	private static enum AdditionState{
+		NOT_ADD,
+		
+		ADD_ONLY{
+			@Override
+			public boolean added() {
+				return true;
+			}
+			
+			@Override
+			public <E> void rehandle(TreeBuilder<E> builder,TreeNode<E> lastAddition) {
+				for(TreeNode<E> node : builder.scrap){
+					AdditionState state = builder.toAdd(node);
+					if(state.added()){
+						builder.scrap.remove(node);
+						builder.scrapLog.get(node.entity()).remove(node);
+						state.rehandle(builder,node);
+						return ;
+					}
+				}
+			}
+		},
+		
+		TREE_RELINK{
+			@Override
+			public boolean added() {
+				return true;
+			}
+			
+			@Override
+			public <E> void rehandle(TreeBuilder<E> builder,TreeNode<E> lastAddition) {
+				treeLink(builder, lastAddition);
+				ADD_ONLY.rehandle(builder, lastAddition);
+			}
+			
+			private <E> void treeLink(TreeBuilder<E> builder,TreeNode<E> lastAddition){
+				treeLinkAsChild(builder,lastAddition);
+				treeLinkAsParent(builder,lastAddition);
+			}
+			
+			private <E> boolean treeLinkAsChild(TreeBuilder<E> builder,TreeNode<E> targetRoot){
+				for(TreeNode<E> rn : builder.rootNodes){ // to make sure the addition is a child.
+					if(rn == targetRoot){
+						continue;
+					}
+					if(builder.tryToChild(rn, targetRoot, true)){
+						boolean r = builder.rootNodes.remove(targetRoot);
+						assert(r);
+						return true;
+					}
+				}
+				return false;
+			}
+			
+			private <E> boolean treeLinkAsParent(TreeBuilder<E> builder,TreeNode<E> targetRoot){
+				for(TreeNode<E> rn : builder.rootNodes){ 
+					if(rn == targetRoot){
+						continue;
+					}
+					if(builder.tryToChild(targetRoot, rn, true)){
+						boolean r = builder.rootNodes.remove(rn);
+						assert(r);
+						this.treeLinkAsParent(builder,targetRoot);
+						return true;
+					}
+					
+				}
+				return false;
+			}
+		};
+		
+		
+		public boolean added(){
+			return false;
+		}
+		
+		public <E> void rehandle(TreeBuilder<E> builder,TreeNode<E> lastAddition) {
+			throw new UnsupportedOperationException();
+		}
+		
 	}
 }

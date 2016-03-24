@@ -38,13 +38,13 @@ public class Chain<E> implements Collection<E>,Cloneable{
 		if(e == null){ // NOTE 如果期望支持对 null 的添加，可以考虑增加 AdditionStrategy ，此时需要考虑 linkStrategy 在连接是对 null 的处理，也要考虑 add(Chain<E> subChain) 方法的处理( subChain 的 AdditionStrategy 是否应该与当前类的 AdditionStrategy 一致).
 			throw new NullPointerException();
 		}
+		if(this.getContainer().isEmpty()){
+			return tyAddToEmpty(e);
+		}
 		return addToHead(e) || addToTail(e);
 	}
 	
 	boolean addToHead(E e){
-		if(this.getContainer().isEmpty()){
-			return tyAddToEmpty(e);
-		}
 		E header = this.getContainer().getFirst();
 		if(chainCondition.appendable(e, header)){
 			this.getContainer().addFirst(e);
@@ -54,9 +54,6 @@ public class Chain<E> implements Collection<E>,Cloneable{
 	}
 	
 	boolean addToTail(E e){
-		if(this.getContainer().isEmpty()){
-			return tyAddToEmpty(e);
-		}
 		E tail = this.getContainer().getLast();
 		if(chainCondition.appendable(tail,e)){
 			this.getContainer().addLast(e);
@@ -66,6 +63,7 @@ public class Chain<E> implements Collection<E>,Cloneable{
 	}
 	
 	private boolean tyAddToEmpty(E e){
+		assert(this.getContainer().size() == 0);
 		if(chainCondition.headable(e)){
 			this.getContainer().add(e);
 			return true;

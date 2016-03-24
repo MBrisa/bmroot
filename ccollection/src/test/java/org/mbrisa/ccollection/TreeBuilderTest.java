@@ -2,6 +2,7 @@ package org.mbrisa.ccollection;
 
 import static org.junit.Assert.*;
 
+import java.util.List;
 
 import org.junit.Test;
 
@@ -24,9 +25,10 @@ public class TreeBuilderTest {
 		 0
 		 */
 		builder.add(n_0); 
-		assertEquals(1,builder.size()); 
+		assertEquals(1,builder.nodeSize()); 
+		assertEquals(1,builder.treeSize()); 
 		assertDirectChildrenWithParent(builder,n_0,0);
-		iteratorTest(builder,n_0,0);
+		iteratorTest(builder,n_0);
 		scrapTest(builder);
 		
 		/*
@@ -34,9 +36,10 @@ public class TreeBuilderTest {
 		 1
 		 */
 		builder.add(n_1);
-		assertEquals(2,builder.size()); 
+		assertEquals(2,builder.nodeSize()); 
+		assertEquals(1,builder.treeSize()); 
 		assertDirectChildrenWithParent(builder,n_0,0,n_1);
-		iteratorTest(builder,n_0,0,n_1);
+		iteratorTest(builder,n_0,n_1);
 		scrapTest(builder);
 		
 		/*
@@ -45,44 +48,43 @@ public class TreeBuilderTest {
 		 1
 		 */
 		builder.add(n__1);
-		assertEquals(3,builder.size()); 
+		assertEquals(3,builder.nodeSize()); 
+		assertEquals(1,builder.treeSize()); 
 		assertDirectChildrenWithParent(builder,n__1,0, n_0);
 		assertDirectChildrenWithParent(builder,n_0,0, n_1);
 		assertDirectChildrenWithParent(builder,n_1,0);
-		iteratorTest(builder,n__1,0,n_0,n_1);
+		iteratorTest(builder,n__1,n_0,n_1);
 		scrapTest(builder);
 		
 		/*
-		 -1
+		 -1, -3
 		 0
 		 1
 		 
-		 scrap:
-		 -3
 		 */
 		builder.add(n__3);
-		assertEquals(3,builder.size()); 
+		assertEquals(4,builder.nodeSize()); 
+		assertEquals(2,builder.treeSize()); 
 		assertDirectChildrenWithParent(builder,n__1,0, n_0);
 		assertDirectChildrenWithParent(builder,n_0,0, n_1);
 		assertDirectChildrenWithParent(builder,n_1,0);
-		iteratorTest(builder,n__1,0,n_0,n_1);
-		scrapTest(builder, n__3);
+		iteratorTest(builder,n__1,n_0,n_1,n__3);
+		scrapTest(builder);
 		
 		/*
-		 -1
+		 -1, -3 ,3
 		 0
 		 1
 		 
-		 scrap:
-		 -3,3
 		 */
 		builder.add(n_3);
-		assertEquals(3,builder.size()); 
+		assertEquals(5,builder.nodeSize()); 
+		assertEquals(3,builder.treeSize()); 
 		assertDirectChildrenWithParent(builder,n__1,0, n_0);
 		assertDirectChildrenWithParent(builder,n_0,0, n_1);
 		assertDirectChildrenWithParent(builder,n_1,0);
-		iteratorTest(builder,n__1,0,n_0,n_1);
-		scrapTest(builder, n__3,n_3);
+		iteratorTest(builder,n__1,n_0,n_1,n__3,n_3);
+		scrapTest(builder);
 		
 		try{
 			builder.add(rn__1);
@@ -90,12 +92,13 @@ public class TreeBuilderTest {
 		}catch(NodeRepeatException e){
 			assertTrue(true);
 		}
-		assertEquals(3,builder.size()); 
+		assertEquals(5,builder.nodeSize()); 
+		assertEquals(3,builder.treeSize()); 
 		assertDirectChildrenWithParent(builder,n__1,0, n_0);
 		assertDirectChildrenWithParent(builder,n_0,0, n_1);
 		assertDirectChildrenWithParent(builder,n_1,0);
-		iteratorTest(builder,n__1,0,n_0,n_1);
-		scrapTest(builder, n__3,n_3);
+		iteratorTest(builder,n__1,n_0,n_1,n__3,n_3);
+		scrapTest(builder);
 		
 		try{
 			builder.add(rn_0);
@@ -103,29 +106,31 @@ public class TreeBuilderTest {
 		}catch(NodeRepeatException e){
 			assertTrue(true);
 		}
-		assertEquals(3,builder.size()); 
+		assertEquals(5,builder.nodeSize()); 
+		assertEquals(3,builder.treeSize()); 
 		assertDirectChildrenWithParent(builder,n__1,0, n_0);
 		assertDirectChildrenWithParent(builder,n_0,0, n_1);
 		assertDirectChildrenWithParent(builder,n_1,0);
-		iteratorTest(builder,n__1,0,n_0,n_1);
-		scrapTest(builder, n__3,n_3);
+		iteratorTest(builder,n__1,n_0,n_1,n__3,n_3);
+		scrapTest(builder);
 		
 		/*
-		 -3
+		 -3 ,3
 		 -2
 		 -1
 		 0
 		 1
 		 */
 		builder.add(n__2);
-		assertEquals(5,builder.size()); 
+		assertEquals(6,builder.nodeSize()); 
+		assertEquals(2,builder.treeSize()); 
 		assertDirectChildrenWithParent(builder,n__3,0, n__2);
 		assertDirectChildrenWithParent(builder,n__2,0, n__1);
 		assertDirectChildrenWithParent(builder,n__1,0, n_0);
 		assertDirectChildrenWithParent(builder,n_0,0, n_1);
 		assertDirectChildrenWithParent(builder,n_1,0);
-		iteratorTest(builder,n__3,0,n__2,n__1,n_0,n_1);
-		scrapTest(builder, n_3);
+		iteratorTest(builder,n__3,n__2,n__1,n_0,n_1,n_3);
+		scrapTest(builder);
 		
 	}
 	
@@ -134,23 +139,15 @@ public class TreeBuilderTest {
 		TreeBuilder<Integer> builder = new TreeBuilder<>(TestUtil.raySerialCondition,new LazyRepeatHandler<Integer>());
 		
 		builder.add(1);
-		assertEquals(0,builder.size());
+		assertEquals(0,builder.nodeSize());
 		builder.add(0);
-		assertEquals(2,builder.size());
+		assertEquals(2,builder.nodeSize());
+		
+		
 	}
 	
 	@Test
 	public void repeatable(){
-//		TreeNode<Integer> n_0 = new TreeNode<>(0);
-//		TreeNode<Integer> n_1 = new TreeNode<>(1);
-//		TreeNode<Integer> n_2 = new TreeNode<>(2);
-//		TreeNode<Integer> rn_1 = new TreeNode<>(1);
-//		TreeNode<Integer> n__1 = new TreeNode<>(-1);
-//		TreeNode<Integer> n_3 = new TreeNode<>(3);
-//		TreeNode<Integer> rn__1 = new TreeNode<>(-1);
-//		TreeNode<Integer> rn_0 = new TreeNode<>(0);
-//		TreeNode<Integer> n__2 = new TreeNode<>(-2);
-//		TreeNode<Integer> n__3 = new TreeNode<>(-3);
 		
 		int n_0 = 0;
 		int n_1 = 1;
@@ -169,9 +166,10 @@ public class TreeBuilderTest {
 		 0
 		 */
 		builder.add(n_0); 
-		assertEquals(1,builder.size()); 
+		assertEquals(1,builder.nodeSize()); 
+		assertEquals(1,builder.treeSize()); 
 		assertDirectChildrenWithParent(builder,n_0,0);
-		iteratorTest(builder,n_0,0);
+		iteratorTest(builder,n_0);
 		scrapTest(builder);
 		
 		/*
@@ -179,10 +177,11 @@ public class TreeBuilderTest {
 		 1
 		 */
 		builder.add(n_1);
-		assertEquals(2,builder.size()); 
+		assertEquals(2,builder.nodeSize()); 
+		assertEquals(1,builder.treeSize()); 
 		assertDirectChildrenWithParent(builder,n_0,0,n_1);
 		assertDirectChildrenWithParent(builder,n_1,0);
-		iteratorTest(builder,n_0,0,n_1);
+		iteratorTest(builder,n_0,n_1);
 		scrapTest(builder);
 		
 		/*
@@ -191,92 +190,84 @@ public class TreeBuilderTest {
 		 1
 		 */
 		builder.add(n__1);
-		assertEquals(3,builder.size()); 
+		assertEquals(3,builder.nodeSize()); 
+		assertEquals(1,builder.treeSize()); 
 		assertDirectChildrenWithParent(builder,n__1,0, n_0);
 		assertDirectChildrenWithParent(builder,n_0,0, n_1);
 		assertDirectChildrenWithParent(builder,n_1,0);
-		iteratorTest(builder,n__1,0,n_0,n_1);
+		iteratorTest(builder,n__1,n_0,n_1);
 		scrapTest(builder);
 		
 		/*
-		 -1
+		 -1，3
 		 0
 		 1
-		 
-		 scrap : 
-		 3
 		 */
 		builder.add(n_3);
-		assertEquals(3,builder.size()); 
+		assertEquals(4,builder.nodeSize()); 
+		assertEquals(2,builder.treeSize()); 
 		assertDirectChildrenWithParent(builder,n__1,0, n_0);
 		assertDirectChildrenWithParent(builder,n_0,0, n_1);
 		assertDirectChildrenWithParent(builder,n_1,0);
-		iteratorTest(builder,n__1,0,n_0,n_1);
-		scrapTest(builder, n_3);
+		iteratorTest(builder,n__1,n_0,n_1,n_3);
+		scrapTest(builder);
 		
 		/*
-		 -1
+		 -1,3,-3
 		 0
 		 1
-		 
-		 scrap : 
-		 3,-3
 		 */
 		builder.add(n__3);
-		assertEquals(3,builder.size()); 
+		assertEquals(5,builder.nodeSize()); 
+		assertEquals(3,builder.treeSize()); 
 		assertDirectChildrenWithParent(builder,n__1,0, n_0);
 		assertDirectChildrenWithParent(builder,n_0,0, n_1);
 		assertDirectChildrenWithParent(builder,n_1,0);
-		iteratorTest(builder,n__1,0,n_0,n_1);
-		scrapTest(builder, n_3,n__3);
+		iteratorTest(builder,n__1,n_0,n_1,n_3,n__3);
+		scrapTest(builder);
 		
 		/*
-		 -1
+		 -1,3,-3,-1
 		 0
 		 1
-		 
-		 scrap : 
-		 3,-3,-1
 		 */
 		builder.add(rn__1);
-		assertEquals(3,builder.size()); 
+		assertEquals(6,builder.nodeSize()); 
+		assertEquals(4,builder.treeSize()); 
 		assertDirectChildrenWithParent(builder,n__1,0, n_0);
 		assertDirectChildrenWithParent(builder,n_0,0, n_1);
 		assertDirectChildrenWithParent(builder,n_1,0);
-		iteratorTest(builder,n__1,0,n_0,n_1);
-		scrapTest(builder, n_3,n__3,rn__1);
+		iteratorTest(builder,n__1,n_0,n_1,n_3,n__3,rn__1);
+		scrapTest(builder);
 		
 		
 		/*
-		 -1
+		 -1    ,3,-3,-1
 		 0,0
 		 1
-		 
-		 scrap : 
-		 3,-3,-1
 		 */
 		builder.add(rn_0);
-		assertEquals(4,builder.size()); 
+		assertEquals(7,builder.nodeSize()); 
+		assertEquals(4,builder.treeSize()); 
 		assertDirectChildrenWithParent(builder,n__1,0, n_0,rn_0);
 		assertDirectChildrenWithParent(builder,n_0,0, n_1);
 		assertDirectChildrenWithParent(builder,rn_0,1);
 		assertDirectChildrenWithParent(builder,n_1,0);
-		iteratorTest(builder,n__1,0,n_0,n_1,rn_0);
-		scrapTest(builder, n_3,n__3,rn__1);
+		iteratorTest(builder,n__1,n_0,n_1,rn_0,n_3,n__3,rn__1);
+		scrapTest(builder);
 		
 		
 		/*
-		 -3
-		 -2
-		 -1,    -1
-		 0,0
-		 1
 		 
-		 scrap : 
-		 3,
+		3, 	-3 
+		 	-2
+		 	-1, -1	
+		 	0,0
+		 	1
 		 */
 		builder.add(n__2);
-		assertEquals(7,builder.size()); 
+		assertEquals(8,builder.nodeSize()); 
+		assertEquals(2,builder.treeSize()); 
 		assertDirectChildrenWithParent(builder,n__3,0, n__2);
 		assertDirectChildrenWithParent(builder,n__2,0, n__1,rn__1);
 		assertDirectChildrenWithParent(builder,rn__1,1);
@@ -284,21 +275,20 @@ public class TreeBuilderTest {
 		assertDirectChildrenWithParent(builder,n_0,0, n_1);
 		assertDirectChildrenWithParent(builder,n_1,0);
 		assertDirectChildrenWithParent(builder,rn_0,1);
-		iteratorTest(builder,n__3,0,n__2,n__1,n_0,n_1,rn_0,rn__1);
-		scrapTest(builder, n_3);
+		iteratorTest(builder,n_3,n__3,n__2,n__1,n_0,n_1,rn_0,rn__1);
+		scrapTest(builder);
 		
 		/*
-		 -3
+	3,	 -3,  	
 		 -2
-		 -1,    -1
+		 -1,-1
 		0, 0
 	   1,1
 	   
-	   scrap : 
-		 3,
 		 */
 		builder.add(rn_1);
-		assertEquals(8,builder.size()); 
+		assertEquals(9,builder.nodeSize()); 
+		assertEquals(2,builder.treeSize()); 
 		assertDirectChildrenWithParent(builder,n__3,0, n__2);
 		assertDirectChildrenWithParent(builder,n__2,0, n__1,rn__1);
 		assertDirectChildrenWithParent(builder,rn__1,1);
@@ -307,8 +297,8 @@ public class TreeBuilderTest {
 		assertDirectChildrenWithParent(builder,n_1,0);
 		assertDirectChildrenWithParent(builder,rn_0,1);
 		assertDirectChildrenWithParent(builder,rn_1,1);
-		iteratorTest(builder,n__3,0,n__2,n__1,n_0,n_1,rn_1,rn_0,rn__1);
-		scrapTest(builder, n_3);
+		iteratorTest(builder,n_3,n__3,n__2,n__1,n_0,n_1,rn_1,rn_0,rn__1);
+		scrapTest(builder);
 		
 		/*
 		 -3
@@ -320,7 +310,8 @@ public class TreeBuilderTest {
 	   3
 		 */
 		builder.add(n_2);
-		assertEquals(10,builder.size()); 
+		assertEquals(10,builder.nodeSize()); 
+		assertEquals(1,builder.treeSize()); 
 		assertDirectChildrenWithParent(builder,n__3,0, n__2);
 		assertDirectChildrenWithParent(builder,n__2,0, n__1,rn__1);
 		assertDirectChildrenWithParent(builder,rn__1,1);
@@ -331,13 +322,13 @@ public class TreeBuilderTest {
 		assertDirectChildrenWithParent(builder,rn_1,1);
 		assertDirectChildrenWithParent(builder,n_2,0,n_3);
 		assertDirectChildrenWithParent(builder,n_3,0);
-		iteratorTest(builder,n__3,0,n__2,n__1,n_0,n_1,n_2,n_3,rn_1,rn_0,rn__1);
+		iteratorTest(builder,n__3,n__2,n__1,n_0,n_1,n_2,n_3,rn_1,rn_0,rn__1);
 		scrapTest(builder);
 		
 	}
 	
 	private <E> void assertDirectChildrenWithParent(TreeBuilder<E> builder,E pe,int index,Object... children){
-		TreeNode<E> parent = builder.retrieveSilently(pe, index);
+		TreeNode<E> parent = builder.getNode(pe, index);
 		assertEquals(children.length , parent.children().size());
 		int i = 0;
 		for(Object child : children){
@@ -345,18 +336,23 @@ public class TreeBuilderTest {
 		}
 	}
 	
-	private <E> void iteratorTest(TreeBuilder<E> builder,E pe,int index,Object... children){
-		TreeNode<E> parent = builder.retrieveSilently(pe, index);
+	private <E> void iteratorTest(TreeBuilder<E> builder,Object... nodes){
+		assertEquals(nodes.length,builder.nodeSize());
+		List<TreeNode<E>> roots = builder.retrieveRoots();
 		int i = 0;
-		for(TreeNode<E> child : parent){
-			assertEquals(children[i++],child.entity());
+		for(TreeNode<E> root : roots){
+			assertEquals(nodes[i++],root.entity());
+			for(TreeNode<E> child : root){
+				assertEquals(nodes[i++],child.entity());
+			}
 		}
 	}
 	
+	
 	private <E> void scrapTest(TreeBuilder<E> builder,Object... children){
-		assertEquals(children.length,builder.retrieveScrap().size());
+		assertEquals(children.length,builder.getScrap().size());
 		int i = 0;
-		for(Object child : builder.retrieveScrap()){
+		for(Object child : builder.getScrap()){
 			assertEquals(children[i++],child);
 		}
 	}
