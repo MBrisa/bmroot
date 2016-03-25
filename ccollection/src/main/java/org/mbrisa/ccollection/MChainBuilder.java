@@ -69,7 +69,7 @@ public class MChainBuilder<E> {
 							reLink();
 							return ;
 						}
-					} catch (NotCompatibleConditionException e) {
+					} catch (NoCompatibilityException e) {
 						assert(false);// must compatible with same chainCondition
 					}
 				}

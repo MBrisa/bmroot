@@ -8,55 +8,56 @@ public class TreeNodeTest {
 	
 	@Test
 	public void simple(){
+		
+		TreeNode<Integer> _1 = new TreeNode<>(-1);
+		TreeNode<Integer> _2 = new TreeNode<>(-2);
+		TreeNode<Integer> _3 = new TreeNode<>(-3);
+		
 		TreeNode<Integer> one = new TreeNode<>(1);
 		TreeNode<Integer> two = new TreeNode<>(2);
 		TreeNode<Integer> three = new TreeNode<>(3);
-		TreeNode<Integer> four = new TreeNode<>(3);
-		TreeNode<Integer> five = new TreeNode<>(3);
+		TreeNode<Integer> four = new TreeNode<>(4);
+		TreeNode<Integer> five = new TreeNode<>(5);
 		
 		
 		try{
-			one.add(one);
+			one.link(one);
 			assertTrue(false);
 		}catch(NodeConflictException e){
-			assertEquals("can not add self.",e.getMessage());
+//			assertEquals("can not add self.",e.getMessage());
 		}
 		assertEquals(0,one.size());
 		
-		assertTrue(one.add(two));
+		assertTrue(one == one.link(two));
 		assertEquals(1,one.size());
 		try{
-			one.add(two);
+			one.link(two);
 			assertTrue(false);
 		}catch(NodeConflictException e){
-			assertEquals("child added already",e.getMessage());
-			assertEquals(two,e.getConflict());
-			assertEquals(one,e.getConflictParent());
+//			assertEquals("relation was create already",e.getMessage());
 		}
 		assertEquals(1,one.size());
 		
 		
-		assertTrue(two.add(three));
+		assertTrue(two == two.link(three));
 		assertEquals(1,two.size());
 		assertEquals(2,one.size());
 		
 		try{
-			one.add(three);
+			one.link(three);
 			assertTrue(false);
 		}catch(NodeConflictException e){
-			assertEquals("child added already",e.getMessage());
-			assertEquals(three,e.getConflict());
-			assertEquals(two,e.getConflictParent());
+//			assertEquals("relation was create already",e.getMessage());
 		}
 		assertEquals(1,two.size());
 		assertEquals(2,one.size());
 		
-		assertTrue(one.add(five));
+		assertTrue(one == one.link(five));
 		assertEquals(0,five.size());
 		assertEquals(1,two.size());
 		assertEquals(3,one.size());
 		
-		assertTrue(four.add(five));
+		assertTrue(four == four.link(five));
 		assertEquals(0,five.size());
 		assertEquals(1,four.size());
 		assertEquals(0,three.size());
@@ -64,12 +65,10 @@ public class TreeNodeTest {
 		assertEquals(3,one.size());
 		
 		try{
-			one.add(four);
+			one.link(four);
 			assertTrue(false);
 		}catch(NodeConflictException e){
-			assertEquals("child added already",e.getMessage());
-			assertEquals(five,e.getConflict());
-			assertEquals(four,e.getConflictParent());
+//			assertEquals("relation was create already",e.getMessage());
 		}
 		
 		assertEquals(0,five.size());
@@ -77,6 +76,28 @@ public class TreeNodeTest {
 		assertEquals(0,three.size());
 		assertEquals(1,two.size());
 		assertEquals(3,one.size());
+		
+		assertTrue(_1 == _1.link(one));
+		assertEquals(0,five.size());
+		assertEquals(1,four.size());
+		assertEquals(0,three.size());
+		assertEquals(1,two.size());
+		assertEquals(3,one.size());
+		assertEquals(4,_1.size());
+		
+		assertTrue(_3 == _3.link(_2));
+		assertEquals(0,_2.size());
+		assertEquals(1,_3.size());
+		
+		assertTrue(_3 == _3.link(_1));
+		assertEquals(0,five.size());
+		assertEquals(1,four.size());
+		assertEquals(0,three.size());
+		assertEquals(1,two.size());
+		assertEquals(3,one.size());
+		assertEquals(4,_1.size());
+		assertEquals(0,_2.size());
+		assertEquals(6,_3.size());
 	}
 	
 	@Test
@@ -100,24 +121,24 @@ public class TreeNodeTest {
 		TreeNode<Person> root_c1_c2 = new TreeNode<Person>(one_c1_c2);
 		
 		
-		root.add(root_c1);
+		root.link(root_c1);
 		assertEquals(1,root.size());
-		root.add(root_c2);
+		root.link(root_c2);
 		assertEquals(2,root.size());
-		root.add(root_c3);
+		root.link(root_c3);
 		assertEquals(3,root.size());
 		
 		
-		root_c1.add(root_c1_c1);
+		root_c1.link(root_c1_c1);
 		assertEquals(1,root_c1.size());
 		assertEquals(4,root.size());
-		root_c1.add(root_c1_c2);
+		root_c1.link(root_c1_c2);
 		assertEquals(2,root_c1.size());
 		assertEquals(5,root.size());
 		assertEquals(0,root_c1_c1.size());
 		assertEquals(0,root_c1_c2.size());
 		
-		superNode.add(root);
+		superNode.link(root);
 		assertEquals(2,root_c1.size());
 		assertEquals(5,root.size());
 		assertEquals(0,root_c1_c1.size());
@@ -192,11 +213,20 @@ public class TreeNodeTest {
 		TreeNode<Person> brisa5 = new TreeNode<Person>(new Person("brisa", 5),nameAndAgeCondition);
 		
 		
-		assertFalse(may35.add(may45));
-		assertFalse(brisa40.add(may20));
-		assertFalse(brisa35.add(may35));
-		assertFalse(may35.add(brisa35));
-		assertTrue(brisa35.add(brisa5));
+		assertTrue(may45 == may35.link(may45));
+		assertTrue(null == brisa40.link(may20));
+		try{
+			brisa35.link(may35);
+			assertTrue(false);
+		}catch(NoCompatibilityException e){
+		}
+		try{
+			may35.link(brisa35);
+			assertTrue(false);
+		}catch(NoCompatibilityException e){
+		}
+		assertTrue(brisa35 == brisa35.link(brisa5));
+		assertEquals(1,may45.size());
 		assertEquals(0,may35.size());
 		assertEquals(1,brisa35.size());
 		

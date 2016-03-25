@@ -26,13 +26,11 @@ public class TreeBuilder<E> {
 	}
 	
 	public void add(E node){
-		if(node == null){ // XXX 如果期望支持对 null 的添加，可以考虑增加 AdditionStrategy ，此时需要考虑 linkStrategy 在连接是对 null 的处理，也要考虑 add(Chain<E> subChain) 方法的处理( subChain 的 AdditionStrategy 是否应该与当前类的 AdditionStrategy 一致).
-			throw new NullPointerException();
-		}
+		TreeNode<E> addition = new TreeNode<>(node,this.condition,this.conflictHandler);
+		
 		if((this.log.get(node) != null || this.scrapLog.get(node) != null) && !this.conflictHandler.repeatable()){
 			throw new NodeRepeatException("node was duplicate");
 		}
-		TreeNode<E> addition = new TreeNode<>(node,this.condition);
 		AdditionState additionState = toAdd(addition);
 		if(additionState.added()){
 			additionState.rehandle(this,addition);
@@ -116,7 +114,7 @@ public class TreeBuilder<E> {
 		if(original == null){
 			this.rootNodes.add(addition);
 		}else{
-			if(!this.rootNodes.remove(original) || !addition.add(original)){
+			if(!this.rootNodes.remove(original) || !addition.link(original)){
 				assert(false);// must exist original in rootNodes and must addable
 				throw new RuntimeException("..");
 			}
@@ -128,7 +126,7 @@ public class TreeBuilder<E> {
 	private boolean tryToChild(TreeNode<E> parent,TreeNode<E> addition, boolean isTreeLink){
 		if(this.condition.appendable(parent.entity(), addition.entity())){
 			TreeNode<E> realParent = this.selectParent(parent,addition);
-			if(realParent != null && realParent.add(addition)){
+			if(realParent != null && realParent.link(addition)){
 				if(!isTreeLink){
 					added(addition);
 				}

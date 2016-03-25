@@ -2,8 +2,6 @@ package org.mbrisa.ccollection;
 
 public class NodeConflictException extends RuntimeException {
 
-	private TreeNode<?> conflict,parent;
-	
 	/**
 	 * 
 	 */
@@ -29,26 +27,5 @@ public class NodeConflictException extends RuntimeException {
 	public NodeConflictException(Throwable cause) {
 		super(cause);
 	}
-	
-	public NodeConflictException(String message,TreeNode<?> conflict,TreeNode<?> parent){
-		super(message);
-		this.conflict = conflict;
-		this.parent = parent;
-	}
-
-	/**
-	 * @return the conflict
-	 */
-	public TreeNode<?> getConflict() {
-		return conflict;
-	}
-
-	/**
-	 * @return the parent
-	 */
-	public TreeNode<?> getConflictParent() {
-		return parent;
-	}
-	
 	
 }

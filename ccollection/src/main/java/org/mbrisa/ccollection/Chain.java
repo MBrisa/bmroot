@@ -71,9 +71,9 @@ public class Chain<E> implements Collection<E>,Cloneable{
 		return false;
 	}
 	
-	public boolean add(Chain<E> subChain) throws NotCompatibleConditionException{
+	public boolean add(Chain<E> subChain){
 		if(!this.chainCondition.equals(subChain.chainCondition)){
-			throw new NotCompatibleConditionException("current ChainCondition:"+this.chainCondition+" is not compatible with "+subChain.chainCondition+" of param chain");
+			throw new NoCompatibilityException("current ChainCondition:"+this.chainCondition+" is not compatible with "+subChain.chainCondition+" of param chain");
 		}
 		if(subChain == this){
 			return false;

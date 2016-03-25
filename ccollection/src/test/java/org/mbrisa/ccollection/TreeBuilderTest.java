@@ -1,8 +1,11 @@
 package org.mbrisa.ccollection;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.Test;
 
@@ -339,13 +342,21 @@ public class TreeBuilderTest {
 	private <E> void iteratorTest(TreeBuilder<E> builder,Object... nodes){
 		assertEquals(nodes.length,builder.nodeSize());
 		List<TreeNode<E>> roots = builder.retrieveRoots();
+		Set<Object> s = new HashSet<>();
 		int i = 0;
 		for(TreeNode<E> root : roots){
-			assertEquals(nodes[i++],root.entity());
+			s.add(root.entity());
+//			assertEquals(nodes[i++],root.entity());
 			for(TreeNode<E> child : root){
-				assertEquals(nodes[i++],child.entity());
+				s.add(child.entity());
+//				assertEquals(nodes[i++],child.entity());
 			}
 		}
+		HashSet<Object> sa = new HashSet<>();
+		for(Object ob : nodes){
+			sa.add(ob);
+		}
+		assertEquals(sa,s);
 	}
 	
 	

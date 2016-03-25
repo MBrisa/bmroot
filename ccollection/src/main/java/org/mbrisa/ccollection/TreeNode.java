@@ -1,9 +1,11 @@
 package org.mbrisa.ccollection;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 
 public class TreeNode<E> implements Cloneable,Iterable<TreeNode<E>> {
@@ -13,23 +15,26 @@ public class TreeNode<E> implements Cloneable,Iterable<TreeNode<E>> {
 	private List<TreeNode<E>> children = new ArrayList<>();
 	private final E e;
 	private final LinkCondition<E> condition;
-	private Set<TreeNode<E>> log = new HashSet<TreeNode<E>>();
+	private final HashMap<E,List<TreeNode<E>>> log = new HashMap<>();
+	private final Set<TreeNode<E>> allChildrenNode = new HashSet<TreeNode<E>>();
+	private final NodeRepeatHandler<E> rHandler;
 	
 	@SuppressWarnings("unchecked")
 	public TreeNode(E e) {
-		if(e == null){
-			throw new NullPointerException();
-		}
-		this.e = e;
-		this.condition = NoLimitLinkCondition.INSTANCE;
+		this(e, NoLimitLinkCondition.INSTANCE, new SingleNodeHandler<E>());
 	}
 	
 	public TreeNode(E e,LinkCondition<E> condition) {
+		this(e, condition, new SingleNodeHandler<E>());
+	}
+	
+	public TreeNode(E e,LinkCondition<E> condition,NodeRepeatHandler<E> nodeRepeatHandler) {
 		if(e == null){
 			throw new NullPointerException();
 		}
 		this.e = e;
 		this.condition = condition;
+		this.rHandler = nodeRepeatHandler;
 	}
 	
 	/**
@@ -39,52 +44,143 @@ public class TreeNode<E> implements Cloneable,Iterable<TreeNode<E>> {
 		return condition;
 	}
 	
-	public boolean add(E e){
-//		TODO
-		return false;
+	public TreeNode<E> link(E e){
+		return link(new TreeNode<E>(e, this.condition,this.rHandler));
 	}
 
-	public boolean add(TreeNode<E> child){
-		validate(child);
-		if(!this.condition.equals(child.condition) || !this.condition.appendable(this.entity(), child.entity())){
-			return false;
+	public TreeNode<E> link(TreeNode<E> target){
+		validate(target);
+		if(!this.condition.equals(target.condition)){
+			throw new NoCompatibilityException("LinkCondition is not equals");
 		}
-		if(this.children.add(child)){
-			child.parent = this;
-			this.increaseChild(child);
-			if(this.parent != null){
-				this.parent.increaseChild(child);
-			}
-			return true;
-		}else{
-			throw new RuntimeException("unknow exception");
+		if(!this.rHandler.equals(target.rHandler)){
+			throw new NoCompatibilityException("NodeRepeatHandler is not equals");
 		}
+		if(searchParentToLink(this, target)){
+			return this;
+		}
+		if(searchParentToLink(target, this)){
+			return target;
+		}
+		return null;
 	}
 	
-	private void validate(TreeNode<E> child){
-		if(child== null /*|| this.entity().equals(child.entity())*/){
-			throw new NullPointerException();
-		}
-		if(this == child){
-			throw new NodeConflictException("can not add self.");
-		}
-		for(TreeNode<E> existed : this.log){
-			if(existed == child){
-				throw new NodeConflictException("child added already",existed,existed.parent);
+	private boolean searchParentToLink(TreeNode<E> parent,TreeNode<E> target){
+		if(this.condition.appendable(parent.entity(), target.entity())){
+			TreeNode<E> realParent = this.selectParent(parent,target);
+			if(realParent != null){
+				realParent.children.add(target);
+				target.parent = realParent;
+				realParent.added(target);
+				return true;
 			}
-			for(TreeNode<E> childChild : child.children){
-				if(existed == childChild){
-					throw new NodeConflictException("child added already",childChild,childChild.parent);
+		}
+		for(TreeNode<E> sub : parent.children()){
+			if(searchParentToLink(sub, target)){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private TreeNode<E> selectParent(TreeNode<E> parentArchetype,TreeNode<E> child){
+		TreeNode<E> realParent;
+		List<TreeNode<E>> parentNodeList = this.log.get(parentArchetype.entity());
+		if(this.rHandler.repeatable()){
+			List<E> parentList = new ArrayList<>();
+			if(parentNodeList == null){ //param 'parent' is current addition ,
+				parentNodeList = new ArrayList<>();
+				parentNodeList.add(parentArchetype);
+				parentList.add(parentArchetype.entity());
+			}else{
+				for(TreeNode<E> p : parentNodeList){
+					parentList.add(p.entity());
 				}
 			}
+			int parentIndex = this.rHandler.selectParent(parentList, child.entity());
+			if(parentIndex == -1){
+				realParent = null;
+			}else{
+				realParent = parentNodeList.get(parentIndex);
+			}
+		}else{
+			if(parentNodeList == null){ //param 'parent' is current addition ,
+				realParent = parentArchetype;
+			}else if(parentNodeList.size() > 1){
+				throw new NodeRepeatException();
+			}else{
+				assert(parentNodeList.size() == 1); //在 log 中创建一个 list 的时候同时必然会添加一个元素
+				realParent = parentNodeList.get(0);
+				assert(realParent.equals(parentArchetype));
+			}
+		}
+		
+		return realParent;
+		
+	}
+	
+	private void validate(TreeNode<E> target){
+		if(target== null /*|| this.entity().equals(child.entity())*/){
+			throw new NullPointerException();
+		}
+		if(this == target){
+			throw new NodeConflictException("can not add self.");
+		}
+		if(this.contains(target) || target.contains(this)){
+			throw new NodeConflictException("relation was create already");
+		}
+		this.repeatCheck(target);
+		target.repeatCheck(this);
+	}
+	
+	private boolean contains(TreeNode<E> node){
+		if(this.allChildrenNode.contains(node)){
+			return true;
+		}
+		for(TreeNode<E> cn : node){
+			if(this.allChildrenNode.contains(cn)){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private void repeatCheck(TreeNode<E> target){
+		if(rHandler.repeatable()){
+			return;
+		}
+		if(this.log.get(target.e) != null){
+			throw new NodeRepeatException("entity repeat.");
+		}
+		for(TreeNode<E> targetChild : target){
+			if(this.log.get(targetChild.e) != null){
+				throw new NodeRepeatException("entity repeat..");
+			}
 		}
 	}
 	
-	private void increaseChild(TreeNode<E> child){
-		int size = child.size() + 1;
-		this.size += size;
-		log.addAll(child.log); // 做 log 以实现对 child 进行检查
-		log.add(child);
+	private void added(TreeNode<E> child){
+		this.size += (child.size() + 1);
+		for(Entry<E, List<TreeNode<E>>> entry : child.log.entrySet()){
+			E e = entry.getKey();
+			List<TreeNode<E>> list =  this.log.get(e);
+			if(list == null){
+				list = new ArrayList<>();
+				this.log.put(e, list);
+			}
+			list.addAll(entry.getValue());
+		}
+		List<TreeNode<E>> list =  this.log.get(child.entity());
+		if(list == null){
+			list = new ArrayList<>();
+			this.log.put(child.entity(), list);
+		}
+		list.add(child);
+		this.allChildrenNode.addAll(child.allChildrenNode);
+		this.allChildrenNode.add(child);
+		if(this.parent != null){
+			this.parent.added(child);
+		}
 	}
 	
 	/**
@@ -143,17 +239,7 @@ public class TreeNode<E> implements Cloneable,Iterable<TreeNode<E>> {
 	 */
 	@Override
 	public Iterator<TreeNode<E>> iterator() {
-		List<TreeNode<E>> treeNodes = new ArrayList<>();
-		restoreAll(treeNodes, this);
-		return treeNodes.iterator();
-	}
-	
-	private void restoreAll(List<TreeNode<E>> treeNodes,TreeNode<E> parent){
-		for(TreeNode<E> child : parent.children()){
-			treeNodes.add(child);
-			restoreAll(treeNodes,child);
-		}
-		return;
+		return allChildrenNode.iterator();
 	}
 	
 	
@@ -172,6 +258,29 @@ public class TreeNode<E> implements Cloneable,Iterable<TreeNode<E>> {
 		@Override
 		public boolean headable(Object addition) {
 			return true;
+		}
+		
+		/* (non-Javadoc)
+		 * @see java.lang.Object#hashCode()
+		 */
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + NoLimitLinkCondition.class.hashCode();
+			return result;
+		}
+
+		/* (non-Javadoc)
+		 * @see java.lang.Object#equals(java.lang.Object)
+		 */
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			return this.getClass() == obj.getClass();
 		}
 		
 	}
@@ -194,6 +303,17 @@ public class TreeNode<E> implements Cloneable,Iterable<TreeNode<E>> {
 //		return true;
 //	}
 	
-	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder("TreeNode [");
+		for(TreeNode<E> node : this){
+			builder.append(node.e.toString());
+			builder.append(",");
+		}
+		return builder.append("]").toString();
+	}
 	
 }

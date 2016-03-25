@@ -10,7 +10,7 @@ import java.util.List;
 import org.junit.Test;
 import org.mbrisa.ccollection.Chain;
 import org.mbrisa.ccollection.LinkCondition;
-import org.mbrisa.ccollection.NotCompatibleConditionException;
+import org.mbrisa.ccollection.NoCompatibilityException;
 import org.mbrisa.ccollection.TestUtil.Node;
 
 public class ChainTest{
@@ -103,7 +103,7 @@ public class ChainTest{
 	}
 	
 	@Test
-	public void addSubChain() throws NotCompatibleConditionException{
+	public void addSubChain() throws NoCompatibilityException{
 		
 		Chain<Integer> chain = new Chain<Integer>(TestUtil.serialCondition);
 		
@@ -183,14 +183,14 @@ public class ChainTest{
 		try {
 			chain.add(chain2);
 			assertTrue(false);
-		} catch (NotCompatibleConditionException e) {
+		} catch (NoCompatibilityException e) {
 			assertTrue(true);
 		}
 		
 		try {
 			chain2.add(chain);
 			assertTrue(false);
-		} catch (NotCompatibleConditionException e) {
+		} catch (NoCompatibilityException e) {
 			assertTrue(true);
 		}
 		TestUtil.orderTest(chain2, 2);
