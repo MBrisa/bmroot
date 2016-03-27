@@ -26,7 +26,7 @@ public class TreeBuilder<E> {
 	}
 	
 	public void add(E node){
-		TreeNode<E> addition = new TreeNode<>(node,this.condition,this.conflictHandler);
+		TreeNode<E> addition = new TreeNode<>(node,this.condition);
 		
 		if((this.log.get(node) != null || this.scrapLog.get(node) != null) && !this.conflictHandler.repeatable()){
 			throw new NodeRepeatException("node was duplicate");
@@ -114,7 +114,7 @@ public class TreeBuilder<E> {
 		if(original == null){
 			this.rootNodes.add(addition);
 		}else{
-			if(!this.rootNodes.remove(original) || !addition.link(original)){
+			if(!this.rootNodes.remove(original) || !addition.add(original)){
 				assert(false);// must exist original in rootNodes and must addable
 				throw new RuntimeException("..");
 			}
@@ -126,7 +126,7 @@ public class TreeBuilder<E> {
 	private boolean tryToChild(TreeNode<E> parent,TreeNode<E> addition, boolean isTreeLink){
 		if(this.condition.appendable(parent.entity(), addition.entity())){
 			TreeNode<E> realParent = this.selectParent(parent,addition);
-			if(realParent != null && realParent.link(addition)){
+			if(realParent != null && realParent.add(addition)){
 				if(!isTreeLink){
 					added(addition);
 				}

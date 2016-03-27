@@ -1,40 +1,28 @@
 package org.mbrisa.ccollection;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
 
-public class TreeNode<E> implements Cloneable,Iterable<TreeNode<E>> {
+public class TreeNode<E> implements Cloneable, Iterable<E> {
 
-	private int size;
-	private TreeNode<E> parent;
-	private List<TreeNode<E>> children = new ArrayList<>();
+	private TreeNode<E> parent; 
+	private int indexInParent = -1; // 该值是当前节点在其父节点 allNodes 中的 index 。当前节点如果没有父节点，该值为 -1 ，如果有父节点该值大于0
+	private List<DCIndex> dcis = new ArrayList<>(); // direct children index in allNodex
 	private final E e;
 	private final LinkCondition<E> condition;
-	private final HashMap<E,List<TreeNode<E>>> log = new HashMap<>();
-	private final Set<TreeNode<E>> allChildrenNode = new HashSet<TreeNode<E>>();
-	private final NodeRepeatHandler<E> rHandler;
+	private LinkedList<TreeNode<E>> allNodes = new LinkedList<TreeNode<E>>(); 
 	
 	@SuppressWarnings("unchecked")
 	public TreeNode(E e) {
-		this(e, NoLimitLinkCondition.INSTANCE, new SingleNodeHandler<E>());
+		this(e, NoLimitLinkCondition.INSTANCE);
 	}
 	
 	public TreeNode(E e,LinkCondition<E> condition) {
-		this(e, condition, new SingleNodeHandler<E>());
-	}
-	
-	public TreeNode(E e,LinkCondition<E> condition,NodeRepeatHandler<E> nodeRepeatHandler) {
-		if(e == null){
-			throw new NullPointerException();
-		}
 		this.e = e;
 		this.condition = condition;
-		this.rHandler = nodeRepeatHandler;
+		this.allNodes.add(this);
 	}
 	
 	/**
@@ -44,143 +32,61 @@ public class TreeNode<E> implements Cloneable,Iterable<TreeNode<E>> {
 		return condition;
 	}
 	
-	public TreeNode<E> link(E e){
-		return link(new TreeNode<E>(e, this.condition,this.rHandler));
-	}
 
-	public TreeNode<E> link(TreeNode<E> target){
-		validate(target);
-		if(!this.condition.equals(target.condition)){
-			throw new NoCompatibilityException("LinkCondition is not equals");
-		}
-		if(!this.rHandler.equals(target.rHandler)){
-			throw new NoCompatibilityException("NodeRepeatHandler is not equals");
-		}
-		if(searchParentToLink(this, target)){
-			return this;
-		}
-		if(searchParentToLink(target, this)){
-			return target;
-		}
-		return null;
+	public boolean add(TreeNode<E> child){
+		validateTreeNode(child);
+		return addToChild(child);
 	}
 	
-	private boolean searchParentToLink(TreeNode<E> parent,TreeNode<E> target){
-		if(this.condition.appendable(parent.entity(), target.entity())){
-			TreeNode<E> realParent = this.selectParent(parent,target);
-			if(realParent != null){
-				realParent.children.add(target);
-				target.parent = realParent;
-				realParent.added(target);
-				return true;
-			}
-		}
-		for(TreeNode<E> sub : parent.children()){
-			if(searchParentToLink(sub, target)){
-				return true;
-			}
-		}
-		return false;
+	public boolean add(E child){
+		return addToChild(new TreeNode<E>(child, this.condition));
 	}
 	
-	private TreeNode<E> selectParent(TreeNode<E> parentArchetype,TreeNode<E> child){
-		TreeNode<E> realParent;
-		List<TreeNode<E>> parentNodeList = this.log.get(parentArchetype.entity());
-		if(this.rHandler.repeatable()){
-			List<E> parentList = new ArrayList<>();
-			if(parentNodeList == null){ //param 'parent' is current addition ,
-				parentNodeList = new ArrayList<>();
-				parentNodeList.add(parentArchetype);
-				parentList.add(parentArchetype.entity());
-			}else{
-				for(TreeNode<E> p : parentNodeList){
-					parentList.add(p.entity());
-				}
-			}
-			int parentIndex = this.rHandler.selectParent(parentList, child.entity());
-			if(parentIndex == -1){
-				realParent = null;
-			}else{
-				realParent = parentNodeList.get(parentIndex);
-			}
-		}else{
-			if(parentNodeList == null){ //param 'parent' is current addition ,
-				realParent = parentArchetype;
-			}else if(parentNodeList.size() > 1){
-				throw new NodeRepeatException();
-			}else{
-				assert(parentNodeList.size() == 1); //在 log 中创建一个 list 的时候同时必然会添加一个元素
-				realParent = parentNodeList.get(0);
-				assert(realParent.equals(parentArchetype));
-			}
+	boolean addToChild(TreeNode<E> child){
+		if(!this.condition.appendable(this.entity(), child.entity())){
+			return false;
 		}
+		child.setParent(this);
 		
-		return realParent;
+		int index = this.size(); //child 在 allNodes 列表中的下标
+		this.dcis.add(new DCIndex(index)); //记录 child 为当前 node 的直接子节点，并记录其在 allNodes 列表中的下标
+		child.indexInParent = index; //通知 child 在其父节点allNodes 列表中的位置
+		this.allNodes.addAll(child.allNodes); //正式添加该 child 到 allNodes 中
 		
+		this.updateAdditionInfoInParent(index,child.size());
+		return true;
 	}
 	
-	private void validate(TreeNode<E> target){
-		if(target== null /*|| this.entity().equals(child.entity())*/){
+	
+	void validateTreeNode(TreeNode<E> target){
+		if(target== null )
 			throw new NullPointerException();
-		}
-		if(this == target){
-			throw new NodeConflictException("can not add self.");
-		}
-		if(this.contains(target) || target.contains(this)){
-			throw new NodeConflictException("relation was create already");
-		}
-		this.repeatCheck(target);
-		target.repeatCheck(this);
+		if(!this.condition.equals(target.condition))
+			throw new NoCompatibilityException("LinkCondition is not equals");
+		if(target.getParent() != null)
+			throw new NodeConflictException("target: ["+ target +"] exists parent already.");
+		if(this.allNodes.contains(target) || target.allNodes.contains(this)) ////不需要对 child 进行检查，因为通过上面的 if(target.getParent() != null) 的检查保证了一个节点最多只能有一个父
+			throw new NodeConflictException("target: ["+ target +"] is current node, or relation was create already");
 	}
 	
-	private boolean contains(TreeNode<E> node){
-		if(this.allChildrenNode.contains(node)){
-			return true;
-		}
-		for(TreeNode<E> cn : node){
-			if(this.allChildrenNode.contains(cn)){
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	private void repeatCheck(TreeNode<E> target){
-		if(rHandler.repeatable()){
+	private void updateAdditionInfoInParent(int addedIndexInChild,int addedSize){
+		if(this.getParent() == null)
 			return;
-		}
-		if(this.log.get(target.e) != null){
-			throw new NodeRepeatException("entity repeat.");
-		}
-		for(TreeNode<E> targetChild : target){
-			if(this.log.get(targetChild.e) != null){
-				throw new NodeRepeatException("entity repeat..");
+		int newAddIndex;
+		int childIndex = this.getParent().allNodes.lastIndexOf(this);
+		assert(childIndex != -1);
+		for(DCIndex dci : this.getParent().dcis){ // update 当前父节点的直接子节点信息。并更新这些子节点的 indexInParent 信息
+			if(dci.getIndex() <= childIndex){ 
+				continue;
 			}
+			int ori_dci = dci.getIndex();
+			int new_dci = ori_dci+addedSize; 
+			dci.setIndex(new_dci);
+			this.getParent().allNodes.get(ori_dci).indexInParent = new_dci;
 		}
-	}
-	
-	private void added(TreeNode<E> child){
-		this.size += (child.size() + 1);
-		for(Entry<E, List<TreeNode<E>>> entry : child.log.entrySet()){
-			E e = entry.getKey();
-			List<TreeNode<E>> list =  this.log.get(e);
-			if(list == null){
-				list = new ArrayList<>();
-				this.log.put(e, list);
-			}
-			list.addAll(entry.getValue());
-		}
-		List<TreeNode<E>> list =  this.log.get(child.entity());
-		if(list == null){
-			list = new ArrayList<>();
-			this.log.put(child.entity(), list);
-		}
-		list.add(child);
-		this.allChildrenNode.addAll(child.allChildrenNode);
-		this.allChildrenNode.add(child);
-		if(this.parent != null){
-			this.parent.added(child);
-		}
+		newAddIndex = childIndex+addedIndexInChild;
+		this.getParent().allNodes.addAll(childIndex+addedIndexInChild, this.allNodes.subList(addedIndexInChild, addedIndexInChild + addedSize));
+		this.getParent().updateAdditionInfoInParent(newAddIndex,addedSize);
 	}
 	
 	/**
@@ -189,77 +95,135 @@ public class TreeNode<E> implements Cloneable,Iterable<TreeNode<E>> {
 	 * @return
 	 */
 	public boolean remove(TreeNode<E> child){
-//		TODO do not forget to change the size,set child 'parent' property to null, remove node from log
+//		TODO do not forget to change the size,set child 'parent' property to null, remove node from allNodes
 		throw new UnsupportedOperationException();
 	}
 	
 	/**
-	 * 返回所有子节点的个数
+	 * 返回当前节点及其所有后代节点的个数
 	 * @return
 	 */
 	public int size(){
-		return this.size;
+		return this.allNodes.size();
 	}
 	
 	public E entity(){
 		return this.e;
 	}
 	
+	/**
+	 * 返回当前节点的直接子节点
+	 * @return
+	 */
 	public List<TreeNode<E>> children(){
-		return new ArrayList<>(this.children);
+		ArrayList<TreeNode<E>> result = new ArrayList<TreeNode<E>>();
+		for(DCIndex dci : dcis){
+			result.add(this.allNodes.get(dci.getIndex()));
+		}
+		return result;
+	}
+	
+	public TreeNode<E> getParent() {
+		return parent;
+	}
+
+	private void setParent(TreeNode<E> parent) {
+		this.parent = parent;
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		// TODO
+		return super.equals(obj);
+	}
+	
+	@Override
+	public int hashCode() {
+		// TODO
+		return super.hashCode();
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder("indexInParent :["+indexInParent+"] current: ["+this.e+"]  element [");
+		for(E node : this){
+			builder.append(node);
+			builder.append(",");
+		}
+		return builder.append("]").toString();
+	}
+	
+	@Override
+	public Iterator<E> iterator() {
+		return this.new EIterator();
+	}
+	
+	
+	@Override
+	protected TreeNode<E> clone() {
+		int indexInRoot = 0;
+		TreeNode<E> node = this;
+		while(node.parent != null){
+			indexInRoot += node.indexInParent;
+			node = node.parent;
+		}
+		TreeNode<E> root = node;
+		TreeNode<E> rootCloned = root.cloneNode();
+		assert(root.indexInParent == -1);
+		TreeNode<E> currentCloned = rootCloned.allNodes.get(indexInRoot);
+		return currentCloned;
 	}
 	
 	@SuppressWarnings("unchecked")
-	@Override
-	protected TreeNode<E> clone() {
-		TreeNode<E> result;
+	private TreeNode<E> cloneNode(){
+		TreeNode<E> cloned = null;
 		try {
-			result = (TreeNode<E>)super.clone();
+			cloned = (TreeNode<E>)super.clone();
 		} catch (CloneNotSupportedException e) {
-			assert(false);
-			return null;
 		}
-		result.children = new ArrayList<>();
-		for(TreeNode<E> child : this.children){
-			result.children.add(child.clone());
+		assert(cloned != null);
+		cloned.allNodes = new LinkedList<>();
+		cloned.dcis = new ArrayList<>();
+		cloned.indexInParent = -1;
+		cloned.parent = null;
+		cloned.allNodes.add(cloned);
+		for(TreeNode<E> child : this.children()){
+			TreeNode<E> childClone = child.cloneNode();
+			cloned.add(childClone);
 		}
-		return result;
-	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((e == null) ? 0 : e.hashCode());
-		return result;
+		return cloned;
 	}
 	
-	/**
-	 * 返回对其所有子节点的迭代器
-	 */
-	@Override
-	public Iterator<TreeNode<E>> iterator() {
-		return allChildrenNode.iterator();
+	private class EIterator implements Iterator<E>{
+		private Iterator<TreeNode<E>> iterator = TreeNode.this.allNodes.iterator();
+		@Override
+		public boolean hasNext() {
+			return iterator.hasNext();
+		}
+		@Override
+		public E next() {
+			return iterator.next().entity();
+		}
 	}
 	
 	
 	@SuppressWarnings("rawtypes")
 	private static class NoLimitLinkCondition implements LinkCondition{
 		private static final NoLimitLinkCondition INSTANCE = new NoLimitLinkCondition(); 
-		
 		private NoLimitLinkCondition() {
 		}
-		
 		@Override
 		public boolean appendable(Object target, Object addition) {
 			return true;
 		}
-		
 		@Override
 		public boolean headable(Object addition) {
 			return true;
 		}
-		
 		/* (non-Javadoc)
 		 * @see java.lang.Object#hashCode()
 		 */
@@ -270,7 +234,6 @@ public class TreeNode<E> implements Cloneable,Iterable<TreeNode<E>> {
 			result = prime * result + NoLimitLinkCondition.class.hashCode();
 			return result;
 		}
-
 		/* (non-Javadoc)
 		 * @see java.lang.Object#equals(java.lang.Object)
 		 */
@@ -282,38 +245,35 @@ public class TreeNode<E> implements Cloneable,Iterable<TreeNode<E>> {
 				return false;
 			return this.getClass() == obj.getClass();
 		}
-		
 	}
 	
 
-//	@Override
-//	public boolean equals(Object obj) {
-//		if (this == obj)
-//			return true;
-//		if (obj == null)
-//			return false;
-//		if (getClass() != obj.getClass())
-//			return false;
-//		TreeNode other = (TreeNode) obj;
-//		if (e == null) {
-//			if (other.e != null)
-//				return false;
-//		} else if (!e.equals(other.e))
-//			return false;
-//		return true;
-//	}
-	
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
-	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder("TreeNode [");
-		for(TreeNode<E> node : this){
-			builder.append(node.e.toString());
-			builder.append(",");
+	private static class DCIndex{
+		private int index;
+		public DCIndex(int index) {
+			this.index = index;
 		}
-		return builder.append("]").toString();
+		public void setIndex(int index){
+			this.index = index;
+		}
+		public int getIndex(){
+			return this.index;
+		}
+	}
+	
+	public static void main(String[] args) {
+		LinkedList<Integer> integers = new LinkedList<Integer>();
+		integers.add(-1);
+		integers.add(0);
+		integers.add(3);
+		
+		LinkedList<Integer> sub = new LinkedList<Integer>();
+		sub.add(0);
+		sub.add(1);
+		sub.add(2);
+		integers.addAll(2, sub);
+		System.out.println(integers);
+		System.out.println(integers.subList(1, integers.size()));
 	}
 	
 }

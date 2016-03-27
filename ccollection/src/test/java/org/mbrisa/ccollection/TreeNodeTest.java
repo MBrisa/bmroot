@@ -7,163 +7,231 @@ import org.junit.Test;
 public class TreeNodeTest {
 	
 	@Test
-	public void simple(){
-		
-		TreeNode<Integer> _1 = new TreeNode<>(-1);
-		TreeNode<Integer> _2 = new TreeNode<>(-2);
-		TreeNode<Integer> _3 = new TreeNode<>(-3);
-		
-		TreeNode<Integer> one = new TreeNode<>(1);
-		TreeNode<Integer> two = new TreeNode<>(2);
-		TreeNode<Integer> three = new TreeNode<>(3);
-		TreeNode<Integer> four = new TreeNode<>(4);
-		TreeNode<Integer> five = new TreeNode<>(5);
-		
-		
+	public void testException(){
+//		Exception
+		TreeNode<Integer> n1 = new TreeNode<>(0);
 		try{
-			one.link(one);
+			n1.add(n1);
 			assertTrue(false);
 		}catch(NodeConflictException e){
-//			assertEquals("can not add self.",e.getMessage());
 		}
-		assertEquals(0,one.size());
-		
-		assertTrue(one == one.link(two));
-		assertEquals(1,one.size());
+		TreeNode<Integer> n2 = new TreeNode<>(0);
+		assertTrue(n1.add(n2));
 		try{
-			one.link(two);
+			n1.add(n2);
 			assertTrue(false);
 		}catch(NodeConflictException e){
-//			assertEquals("relation was create already",e.getMessage());
 		}
-		assertEquals(1,one.size());
-		
-		
-		assertTrue(two == two.link(three));
-		assertEquals(1,two.size());
-		assertEquals(2,one.size());
-		
+		TreeNode<Integer> n3 = new TreeNode<>(0);
 		try{
-			one.link(three);
+			n3.add(n2);
 			assertTrue(false);
 		}catch(NodeConflictException e){
-//			assertEquals("relation was create already",e.getMessage());
 		}
-		assertEquals(1,two.size());
-		assertEquals(2,one.size());
-		
-		assertTrue(one == one.link(five));
-		assertEquals(0,five.size());
-		assertEquals(1,two.size());
-		assertEquals(3,one.size());
-		
-		assertTrue(four == four.link(five));
-		assertEquals(0,five.size());
-		assertEquals(1,four.size());
-		assertEquals(0,three.size());
-		assertEquals(1,two.size());
-		assertEquals(3,one.size());
-		
+		assertTrue(n2.add(n3));
 		try{
-			one.link(four);
+			n1.add(n3);
 			assertTrue(false);
 		}catch(NodeConflictException e){
-//			assertEquals("relation was create already",e.getMessage());
 		}
-		
-		assertEquals(0,five.size());
-		assertEquals(1,four.size());
-		assertEquals(0,three.size());
-		assertEquals(1,two.size());
-		assertEquals(3,one.size());
-		
-		assertTrue(_1 == _1.link(one));
-		assertEquals(0,five.size());
-		assertEquals(1,four.size());
-		assertEquals(0,three.size());
-		assertEquals(1,two.size());
-		assertEquals(3,one.size());
-		assertEquals(4,_1.size());
-		
-		assertTrue(_3 == _3.link(_2));
-		assertEquals(0,_2.size());
-		assertEquals(1,_3.size());
-		
-		assertTrue(_3 == _3.link(_1));
-		assertEquals(0,five.size());
-		assertEquals(1,four.size());
-		assertEquals(0,three.size());
-		assertEquals(1,two.size());
-		assertEquals(3,one.size());
-		assertEquals(4,_1.size());
-		assertEquals(0,_2.size());
-		assertEquals(6,_3.size());
 	}
+	
+	@Test
+	public void nomalTest(){
+//		Normal
+		TreeNode<Integer> root = new TreeNode<>(0);
+		TreeNode<Integer> c1 = new TreeNode<Integer>(1);
+		TreeNode<Integer> c2 = new TreeNode<Integer>(2);
+		
+		iteratorTest(root, 0);
+		assertTrue(root.add(c1));
+		iteratorTest(root, 0,1);
+		assertTrue(root.add(c2));
+		iteratorTest(root, 0,1,2);
+		iteratorTest(c1, 1);
+		iteratorTest(c2, 2);
+		dcTest(root, c1,c2);
+		dcTest(c1);
+		dcTest(c2);
+		cloneTest(root);
+		cloneTest(c1);
+		cloneTest(c2);
+	}
+	
+	@Test
+	public void subToAddTest(){
+//		Sub to add
+		TreeNode<Integer> root = new TreeNode<Integer>(0);
+		TreeNode<Integer> c1 = new TreeNode<Integer>(1);
+		TreeNode<Integer> c2 = new TreeNode<Integer>(2);
+		
+		root.add(c1);
+		c1.add(c2);
+		iteratorTest(root, 0,1,2);
+		iteratorTest(c1, 1,2);
+		iteratorTest(c2, 2);
+		dcTest(root, c1);
+		dcTest(c1,c2);
+		dcTest(c2);
+		cloneTest(root);
+		cloneTest(c1);
+		cloneTest(c2);
+	}
+	
+	@Test
+	public void addSubTree(){
+//		add a sub tree
+		TreeNode<Integer> root = new TreeNode<>(0);
+		TreeNode<Integer> subRoot = new TreeNode<>(1);
+		TreeNode<Integer> subChild = new TreeNode<>(2);
+		
+		subRoot.add(subChild);
+		root.add(subRoot);
+		iteratorTest(root, 0,1,2);
+		iteratorTest(subRoot, 1,2);
+		iteratorTest(subChild, 2);
+		dcTest(root, subRoot);
+		dcTest(subRoot, subChild);
+		dcTest(subChild);
+		cloneTest(root);
+		cloneTest(subRoot);
+		cloneTest(subChild);
+	}
+	
+	@Test
+	public void addNull(){
+//		add null
+		TreeNode<Integer> root = new TreeNode<>(0);
+		try{
+			root.add((TreeNode<Integer>)null);
+			assertTrue(false);
+		}catch(NullPointerException e){
+		}
+		iteratorTest(root, 0);
+		TreeNode<Integer> intNull = new TreeNode<>((Integer)null);
+		assertTrue(root.add(intNull));
+		iteratorTest(root, 0,null);
+		dcTest(root, intNull);
+		cloneTest(root);
+		cloneTest(intNull);
+	}
+	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@Test
+	public void addMultinode(){
+//		add multi-node
+		TreeNode<Object> root0 = new TreeNode<>(null);
+		TreeNode<Object> numberRoot = new TreeNode<>((Object)(-1));
+		TreeNode<Object> stringRoot = new TreeNode<>((Object)"");
+		TreeNode<Object> classRoot = new TreeNode<>((Object)Object.class);
+		
+		TreeNode<Object> intRoot = new TreeNode((Object)0);
+		TreeNode<Object> int1 = new TreeNode((Object)1);
+		TreeNode<Object> int50 = new TreeNode((Object)50);
+		TreeNode<Object> longRoot = new TreeNode((Object)100L);
+		TreeNode<Object> long1 = new TreeNode((Object)101L);
+		TreeNode<Object> long2 = new TreeNode((Object)102L);
+		
+		
+		TreeNode<Object> oneCharRoot = new TreeNode((Object)"a");
+		TreeNode<Object> sb = new TreeNode((Object)"b");
+		TreeNode<Object> sc = new TreeNode((Object)"c");
+		TreeNode<Object> twoCharRoot = new TreeNode((Object)"aa");
+		TreeNode<Object> sbb = new TreeNode((Object)"bb");
+		TreeNode<Object> scc = new TreeNode((Object)"cc");
+		
+		TreeNode<Object> stringClass = new TreeNode<>((Object)String.class);
+		TreeNode<Object> intgerClass = new TreeNode<>((Object)Integer.class);
+		
+//		顺序添加
+		assertTrue(root0.add(numberRoot));
+		assertTrue(numberRoot.add(intRoot));
+		assertTrue(numberRoot.add(longRoot));
+		assertTrue(intRoot.add(int1));
+		assertTrue(intRoot.add(int50));
+		assertTrue(longRoot.add(long1));
+		assertTrue(long1.add(long2));
+		
+//		逆序添加
+		assertTrue(sbb.add(scc));
+		assertTrue(twoCharRoot.add(sbb));
+		assertTrue(oneCharRoot.add(sb));
+		assertTrue(oneCharRoot.add(sc));
+		assertTrue(stringRoot.add(oneCharRoot));
+		assertTrue(stringRoot.add(twoCharRoot));
+		assertTrue(root0.add(stringRoot));
+		
+//		无序添加
+		assertTrue(classRoot.add(stringClass));
+		assertTrue(root0.add(classRoot));
+		assertTrue(classRoot.add(intgerClass));
+		
+		
+		iteratorTest(long2, 102L);
+		dcTest(long2);
+		iteratorTest(long1, 101L,102L);
+		dcTest(long1,long2);
+		iteratorTest(longRoot, 100L,101L,102L);
+		dcTest(longRoot,long1);
+		iteratorTest(int1, 1);
+		dcTest(int1);
+		iteratorTest(int50, 50);
+		dcTest(int50);
+		iteratorTest(intRoot, 0,1,50);
+		dcTest(intRoot,int1,int50);
+		iteratorTest(numberRoot, -1,0,1,50,100L,101L,102L);
+		dcTest(numberRoot,intRoot,longRoot);
+		
+		iteratorTest(scc, "cc");
+		dcTest(scc);
+		iteratorTest(sbb, "bb","cc");
+		dcTest(sbb,scc);
+		iteratorTest(twoCharRoot, "aa","bb","cc");
+		dcTest(twoCharRoot,sbb);
+		iteratorTest(sb, "b");
+		dcTest(sb);
+		iteratorTest(sc, "c");
+		dcTest(sc);
+		iteratorTest(oneCharRoot, "a","b","c");
+		dcTest(oneCharRoot,sb,sc);
+		iteratorTest(stringRoot, "","a","b","c","aa","bb","cc");
+		dcTest(stringRoot,oneCharRoot,twoCharRoot);
+		
+		iteratorTest(stringClass, String.class);
+		dcTest(stringClass);
+		iteratorTest(intgerClass, Integer.class);
+		dcTest(intgerClass);
+		iteratorTest(classRoot, Object.class,String.class,Integer.class);
+		dcTest(classRoot,stringClass,intgerClass);
+		
+		iteratorTest(root0, (Object)null,-1,0,1,50,100L,101L,102L,"","a","b","c","aa","bb","cc",Object.class,String.class,Integer.class);
+		dcTest(root0,numberRoot,stringRoot,classRoot);
+		
+		cloneTest(root0);
+		cloneTest(numberRoot);
+		cloneTest(stringRoot);
+		cloneTest(classRoot);
+		cloneTest(intRoot);
+		cloneTest(int1);
+		cloneTest(int50);
+		cloneTest(longRoot);
+		cloneTest(long1);
+		cloneTest(long2);
+		cloneTest(oneCharRoot);
+		cloneTest(sb);
+		cloneTest(sc);
+		cloneTest(twoCharRoot);
+		cloneTest(sbb);
+		cloneTest(sbb);
+		cloneTest(stringClass);
+		cloneTest(intgerClass);
+		
+		
+	}
+	
 	
 	@Test
 	public void go(){
-		Person sp = new Person("may", 55);
-		Person one = new Person("may", 55);
-		Person one_c1 = new Person("may", 35);
-		Person one_c2 = new Person("may", 36);
-		Person one_c3 = new Person("may", 37);
-		
-		Person one_c1_c1 = new Person("may",5);
-		Person one_c1_c2 = new Person("may",6);
-		
-		TreeNode<Person> superNode = new TreeNode<>(sp);
-		TreeNode<Person> root = new TreeNode<Person>(one);
-		TreeNode<Person> root_c1 = new TreeNode<Person>(one_c1);
-		TreeNode<Person> root_c2 = new TreeNode<Person>(one_c2);
-		TreeNode<Person> root_c3 = new TreeNode<Person>(one_c3);
-		
-		TreeNode<Person> root_c1_c1 = new TreeNode<Person>(one_c1_c1);
-		TreeNode<Person> root_c1_c2 = new TreeNode<Person>(one_c1_c2);
-		
-		
-		root.link(root_c1);
-		assertEquals(1,root.size());
-		root.link(root_c2);
-		assertEquals(2,root.size());
-		root.link(root_c3);
-		assertEquals(3,root.size());
-		
-		
-		root_c1.link(root_c1_c1);
-		assertEquals(1,root_c1.size());
-		assertEquals(4,root.size());
-		root_c1.link(root_c1_c2);
-		assertEquals(2,root_c1.size());
-		assertEquals(5,root.size());
-		assertEquals(0,root_c1_c1.size());
-		assertEquals(0,root_c1_c2.size());
-		
-		superNode.link(root);
-		assertEquals(2,root_c1.size());
-		assertEquals(5,root.size());
-		assertEquals(0,root_c1_c1.size());
-		assertEquals(0,root_c1_c2.size());
-		assertEquals(6,superNode.size());
-		
-		assertEquals(3,root.children().size());
-		assertEquals(root_c1,root.children().get(0));
-		assertEquals(root_c2,root.children().get(1));
-		assertEquals(root_c3,root.children().get(2));
-		
-		assertEquals(2,root_c1.children().size());
-		assertEquals(root_c1_c1,root_c1.children().get(0));
-		assertEquals(root_c1_c2,root_c1.children().get(1));
-		
-		assertEquals(0,root_c2.children().size());
-		assertEquals(0,root_c3.children().size());
-		assertEquals(0,root_c1_c1.children().size());
-		assertEquals(0,root_c1_c2.children().size());
-		
-		
-	}
-	
-	@Test
-	public void go2(){
 		
 		final LinkCondition<Person> nameAndAgeCondition = new LinkCondition<Person>() {
 			@Override
@@ -213,24 +281,82 @@ public class TreeNodeTest {
 		TreeNode<Person> brisa5 = new TreeNode<Person>(new Person("brisa", 5),nameAndAgeCondition);
 		
 		
-		assertTrue(may45 == may35.link(may45));
-		assertTrue(null == brisa40.link(may20));
+		assertFalse(may35.add(may45)); //不满足 condition
+		assertFalse(brisa40.add(may20)); // 不满足 condition
 		try{
-			brisa35.link(may35);
+			brisa35.add(may35); // condition 不一致
 			assertTrue(false);
 		}catch(NoCompatibilityException e){
 		}
 		try{
-			may35.link(brisa35);
+			may35.add(brisa35); // condition 不一致
 			assertTrue(false);
 		}catch(NoCompatibilityException e){
 		}
-		assertTrue(brisa35 == brisa35.link(brisa5));
+		assertTrue(brisa35.add(brisa5));
 		assertEquals(1,may45.size());
-		assertEquals(0,may35.size());
-		assertEquals(1,brisa35.size());
+		assertEquals(1,may35.size());
+		assertEquals(2,brisa35.size());
 		
 	}
+	
+	private void iteratorTest(TreeNode<?> treeNode,Object... nodes){
+		assertEquals(nodes.length,treeNode.size());
+		int i = 0;
+		for(Object n : treeNode){
+			assertEquals(nodes[i++],n);
+		}
+	}
+	
+	/**
+	 * direct children test
+	 */
+	private void dcTest(TreeNode<?> parent,TreeNode<?>... children){
+		assertEquals(children.length,parent.children().size());
+		int i = 0;
+		for(TreeNode<?> child : parent.children()){
+			assertEquals(children[i++],child);
+		}
+	}
+	
+	private void cloneTest(TreeNode<?> original){
+		TreeNode<?> cloned = original.clone();
+		cloneTest(original, cloned);
+		TreeNode<?> op = original.getParent();
+		TreeNode<?> cp = cloned.getParent();
+		while(op != null){
+			cloneTest(op, cp);
+			op = op.getParent();
+			cp = cp.getParent();
+		}
+	}
+	
+	private void cloneTest(TreeNode<?> original,TreeNode<?> cloned){
+		assertEquals(original.size(),cloned.size());
+		int i = 0;
+		for(Object entry : original){
+			int j = 0;
+			boolean compared = false;
+			for(Object clonedEntry : original){
+				if(j++ == i){
+					assertEquals(entry, clonedEntry);
+					compared = true;
+					break;
+				}
+			}
+			assertTrue(compared);
+			i++;
+		}
+		assertEquals(original.children().size(),cloned.children().size());
+		i = 0;
+		for(TreeNode<?> child : original.children()){
+			TreeNode<?> clonedChild = cloned.children().get(i++);
+			assertEquals(child.size(),clonedChild.size());
+			assertEquals(child.entity(),clonedChild.entity());
+			cloneTest(child, clonedChild);
+		}
+	}
+	
 	
 	private class Person{
 		private final String name;
