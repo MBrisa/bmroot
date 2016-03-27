@@ -3,12 +3,13 @@ package org.mbrisa.ccollection;
 import static org.junit.Assert.assertEquals;
 
 import org.mbrisa.ccollection.Chain;
-import org.mbrisa.ccollection.LinkCondition;
+import org.mbrisa.ccollection.BuildingCondition;
 
 public class TestUtil {
 	
 	public static SerialCondition serialCondition = new SerialCondition();
-	public static RaySerialCondition raySerialCondition = new RaySerialCondition();
+	public static SerialConditionToBuild serialConditionToBuild = new SerialConditionToBuild();
+	public static RaySerialConditionToBuild raySerialConditionToBuild = new RaySerialConditionToBuild();
 	public static ParentChildCondition parentChildCondition = new ParentChildCondition();
 	public static RayParentChildCondition rayParentChildCondition = new RayParentChildCondition();
 	
@@ -22,7 +23,7 @@ public class TestUtil {
 		}
 	}
 	
-	public static class SerialCondition implements LinkCondition<Integer>{
+	public static class SerialCondition implements LinkedCondition<Integer>{
 		@Override
 		public boolean appendable(Integer target, Integer addition) {
 			if(target == null || addition == null){
@@ -39,13 +40,16 @@ public class TestUtil {
 			return this.getClass().equals(ob.getClass());
 		}
 		
+	}
+	
+	public static class SerialConditionToBuild extends SerialCondition implements BuildingCondition<Integer>{
 		@Override
 		public boolean headable(Integer addition) {
 			return true;
 		}
 	}
 	
-	public static class RaySerialCondition extends SerialCondition{
+	public static class RaySerialConditionToBuild extends SerialCondition implements BuildingCondition<Integer>{
 		
 		@Override
 		public boolean appendable(Integer target, Integer addition) {
@@ -54,14 +58,14 @@ public class TestUtil {
 			}
 			return super.appendable(target, addition);
 		}
-		
 		@Override
 		public boolean headable(Integer addition) {
 			return addition == 0;
 		}
 	}
 	
-	public static class ParentChildCondition implements LinkCondition<Node>{
+	
+	public static class ParentChildCondition implements LinkedCondition<Node>{
 		@Override
 		public boolean equals(Object ob) {
 			if(ob == null){
@@ -77,14 +81,16 @@ public class TestUtil {
 			}
 			return new Integer(target.getId()).equals(addition.getParentId());
 		}
-		
+	}
+	
+	public static class ParentChildConditionToBuild extends ParentChildCondition implements BuildingCondition<Node>{
 		@Override
 		public boolean headable(Node addition) {
 			return true;
 		}
 	}
 	
-	public static class RayParentChildCondition extends ParentChildCondition{
+	public static class RayParentChildCondition extends ParentChildCondition implements BuildingCondition<Node>{
 		@Override
 		public boolean headable(Node addition) {
 			return addition.getParentId() == null;

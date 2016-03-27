@@ -11,29 +11,36 @@ public class TreeNodeTest {
 //		Exception
 		TreeNode<Integer> n1 = new TreeNode<>(0);
 		try{
-			n1.add(n1);
+			n1.add(n1); // can not add self
 			assertTrue(false);
 		}catch(NodeConflictException e){
 		}
 		TreeNode<Integer> n2 = new TreeNode<>(0);
 		assertTrue(n1.add(n2));
 		try{
-			n1.add(n2);
+			n1.add(n2); // can not add again
 			assertTrue(false);
 		}catch(NodeConflictException e){
 		}
 		TreeNode<Integer> n3 = new TreeNode<>(0);
 		try{
-			n3.add(n2);
+			n3.add(n2); // n2 exists parent
 			assertTrue(false);
 		}catch(NodeConflictException e){
 		}
 		assertTrue(n2.add(n3));
 		try{
-			n1.add(n3);
+			n1.add(n3); // n3 exists parent
 			assertTrue(false);
 		}catch(NodeConflictException e){
 		}
+		assertTrue(n1.add(0));
+		iteratorTest(n1, 0,0,0,0);
+		
+		TreeNode<Integer> node = new TreeNode<>(0,TestUtil.serialCondition);
+		iteratorTest(node, 0);
+		assertTrue(node.add(1));
+		assertFalse(node.add(2));
 	}
 	
 	@Test
@@ -233,7 +240,7 @@ public class TreeNodeTest {
 	@Test
 	public void go(){
 		
-		final LinkCondition<Person> nameAndAgeCondition = new LinkCondition<Person>() {
+		final BuildingCondition<Person> nameAndAgeCondition = new BuildingCondition<Person>() {
 			@Override
 			public boolean equals(Object ob) {
 				if(ob == null){
@@ -253,7 +260,7 @@ public class TreeNodeTest {
 			}
 		};
 		
-		final LinkCondition<Person> ageCondition = new LinkCondition<Person>() {
+		final BuildingCondition<Person> ageCondition = new BuildingCondition<Person>() {
 			@Override
 			public boolean equals(Object ob) {
 				if(ob == null){

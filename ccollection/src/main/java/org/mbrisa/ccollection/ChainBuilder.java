@@ -9,20 +9,24 @@ public class ChainBuilder<E> {
 	private final Chain<E> chain ;
 	private final LinkedList<E> scrap = new LinkedList<>();
 	private final NoCompleteHandler noCompletion;
+	private final BuildingCondition<E> condition;
 
-	public ChainBuilder(LinkCondition<E> condition,NoCompleteHandler handler) {
+	public ChainBuilder(BuildingCondition<E> condition, NoCompleteHandler handler) {
 		this.chain = new Chain<>(condition);
+		this.condition = condition;
 		this.noCompletion = handler;
 	}
 	
-	public ChainBuilder(LinkCondition<E> condition){
-		this(condition, new GruffNoCompleteHandler());
+	public ChainBuilder(BuildingCondition<E> condition){
+		this(condition,new GruffNoCompleteHandler());
 	}
 	
 	public void addNode(E e){
-		if(this.chain.add(e)){
-			relinkFromScrap();
-			return;
+		if(this.chain.size() > 0 || this.condition.headable(e)){
+			if(this.chain.add(e)){
+				relinkFromScrap();
+				return;
+			}
 		}
 		this.scrap.add(e);
 	}

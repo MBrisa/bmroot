@@ -9,21 +9,51 @@ import java.util.List;
 
 import org.junit.Test;
 import org.mbrisa.ccollection.Chain;
-import org.mbrisa.ccollection.LinkCondition;
 import org.mbrisa.ccollection.NoCompatibilityException;
 import org.mbrisa.ccollection.TestUtil.Node;
 
 public class ChainTest{
 	
 	@Test
+	public void exceptionTest(){
+		Chain<Integer> chain = new Chain<Integer>();
+		assertTrue(chain.add((Integer)null));
+		try{
+			chain.add(chain); // add self
+			assertTrue(false);
+		}catch(NodeConflictException e){
+		}
+		assertFalse(chain.add(new Chain<Integer>())); //add empty
+		Chain<Integer> chain2 = new Chain<Integer>(TestUtil.serialCondition);
+		chain.add(2);
+		try{
+			chain.add(chain2);// condition is not same
+			assertTrue(false);
+		}catch(NoCompatibilityException e){
+		}
+		try{
+			chain2.add(chain);// condition is not same
+			assertTrue(false);
+		}catch(NoCompatibilityException e){
+		}
+		
+		Chain<Node> nChain = new Chain<>();
+		Node root = new Node(null, 0);
+		assertTrue(nChain.add(root));
+		assertTrue(nChain.add(root)); // add the same ob
+		TestUtil.orderTest(nChain, root,root);
+		
+	}
+	
+	@Test
 	public void simpleTest() {
 		Chain<Integer> chain = new Chain<Integer>(TestUtil.serialCondition);
 		
-		chain.add(1);
-		chain.add(0);
-		chain.add(3);
-		chain.add(-1);
-		chain.add(-3);
+		assertTrue(chain.add(1));
+		assertTrue(chain.add(0));
+		assertFalse(chain.add(3));
+		assertTrue(chain.add(-1));
+		assertFalse(chain.add(-3));
 		
 		TestUtil.orderTest(chain, -1,0,1);
 		try{
@@ -37,29 +67,7 @@ public class ChainTest{
 	}
 	
 	@Test
-	public void simpleTest2() {
-		Chain<Integer> chain = new Chain<Integer>(TestUtil.raySerialCondition);
-		
-		chain.add(1);
-		chain.add(0);
-		chain.add(3);
-		chain.add(-1);
-		chain.add(-3);
-		
-		TestUtil.orderTest(chain,0);
-		
-		try{
-			chain.add((Integer)null);
-			assertTrue(false);
-		}catch(NullPointerException e){
-			assertTrue(true);
-		}
-		
-		TestUtil.orderTest(chain,0);
-	}
-	
-	@Test
-	public void go(){
+	public void conditionTest1(){
 		Node root = new Node(null, 0);
 		Node level1 = new Node(0, 1);
 		Node level2 = new Node(1, 2);
@@ -68,36 +76,36 @@ public class ChainTest{
 		
 		Chain<Node> chain = new Chain<Node>(TestUtil.parentChildCondition);
 		
-		chain.add(level1);
+		assertTrue(chain.add(level1));
 		TestUtil.orderTest(chain, level1);
 		
-		chain.add(level2);
+		assertTrue(chain.add(level2));
 		TestUtil.orderTest(chain, level1,level2);
 		
 		assertFalse(chain.add(level2_no));
 		TestUtil.orderTest(chain, level1,level2);
 		
-		chain.add(level3);
+		assertTrue(chain.add(level3));
 		TestUtil.orderTest(chain, level1,level2,level3);
 		
-		chain.add(root);
+		assertTrue(chain.add(root));
 		TestUtil.orderTest(chain, root,level1,level2,level3);
 	}
 	
 	@Test
-	public void go2(){
+	public void conditionTest2(){
 		Node root = new Node(null, 0);
 		Node level1 = new Node(0, 1);
 		
-		Chain<Node> chain = new Chain<Node>(TestUtil.rayParentChildCondition);
+		Chain<Node> chain = new Chain<Node>(TestUtil.parentChildCondition);
 		
-		assertFalse(chain.add(level1));
-		assertEquals(0,chain.size());
+		assertTrue(chain.add(level1));
+		assertEquals(1,chain.size());
 		
 		assertTrue(chain.add(root));
-		TestUtil.orderTest(chain, root);
+		TestUtil.orderTest(chain, root,level1);
 		
-		chain.add(level1);
+		assertFalse(chain.add(level1));
 		TestUtil.orderTest(chain, root,level1);
 		
 	}
@@ -152,49 +160,6 @@ public class ChainTest{
 		assertTrue(chain4.add(chain5));
 		assertFalse(chain4.add(chain6));
 		TestUtil.orderTest(chain4, 0,1,2);
-	}
-	
-	@Test
-	public void compatibleCondition() {
-		Chain<Integer> chain = new Chain<Integer>(TestUtil.serialCondition);
-		chain.add(0);
-		
-		Chain<Integer> chain2 = new Chain<Integer>(new LinkCondition<Integer>() {
-			@Override
-			public boolean equals(Object ob) {
-				if(ob == null){
-					return false;
-				}
-				return this.getClass() == ob.getClass(); // no strict hypothesis
-			}
-			
-			@Override
-			public boolean appendable(Integer target, Integer addition) {
-				return target - addition < 0;
-			}
-			
-			@Override
-			public boolean headable(Integer addition) {
-				return true;
-			}
-		});
-		chain2.add(2);
-		
-		try {
-			chain.add(chain2);
-			assertTrue(false);
-		} catch (NoCompatibilityException e) {
-			assertTrue(true);
-		}
-		
-		try {
-			chain2.add(chain);
-			assertTrue(false);
-		} catch (NoCompatibilityException e) {
-			assertTrue(true);
-		}
-		TestUtil.orderTest(chain2, 2);
-		
 	}
 	
 	@Test

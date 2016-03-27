@@ -7,24 +7,26 @@ import java.util.LinkedList;
 public class Chain<E> implements Collection<E>,Cloneable{
 
 	private LinkedList<E> container = new LinkedList<>();
-	private final LinkCondition<E> chainCondition ;
+	private final LinkedCondition<E> chainCondition ;
 
+	@SuppressWarnings("unchecked")
+	public Chain() {
+		this(NoLimitLinkedCondition.getInstance());
+	}
 	
-	public Chain(LinkCondition<E> chainCondition) {
+	public Chain(LinkedCondition<E> chainCondition) {
 		this.chainCondition = chainCondition;
 	}
 	
-	public Chain(E e,LinkCondition<E> chainCondition) throws NotToHeaderException {
+	public Chain(E e,LinkedCondition<E> chainCondition) throws NotToHeaderException {
 		this.chainCondition = chainCondition;
-		if(!this.add(e)){
-			throw new NotToHeaderException();
-		}
+		this.getContainer().add(e);
 	}
 	
 	/**
 	 * @return the chainCondition
 	 */
-	public LinkCondition<E> getChainCondition() {
+	public LinkedCondition<E> getChainCondition() {
 		return chainCondition;
 	}
 	
@@ -35,11 +37,9 @@ public class Chain<E> implements Collection<E>,Cloneable{
 	 */
 	@Override
 	public boolean add(E e) {
-		if(e == null){ // NOTE 如果期望支持对 null 的添加，可以考虑增加 AdditionStrategy ，此时需要考虑 linkStrategy 在连接是对 null 的处理，也要考虑 add(Chain<E> subChain) 方法的处理( subChain 的 AdditionStrategy 是否应该与当前类的 AdditionStrategy 一致).
-			throw new NullPointerException();
-		}
 		if(this.getContainer().isEmpty()){
-			return tyAddToEmpty(e);
+			this.getContainer().add(e);
+			return true;
 		}
 		return addToHead(e) || addToTail(e);
 	}
@@ -62,21 +62,12 @@ public class Chain<E> implements Collection<E>,Cloneable{
 		return false;
 	}
 	
-	private boolean tyAddToEmpty(E e){
-		assert(this.getContainer().size() == 0);
-		if(chainCondition.headable(e)){
-			this.getContainer().add(e);
-			return true;
-		}
-		return false;
-	}
-	
 	public boolean add(Chain<E> subChain){
 		if(!this.chainCondition.equals(subChain.chainCondition)){
 			throw new NoCompatibilityException("current ChainCondition:"+this.chainCondition+" is not compatible with "+subChain.chainCondition+" of param chain");
 		}
 		if(subChain == this){
-			return false;
+			throw new NodeConflictException("can not add self.");
 		}
 		if(subChain.size() == 0){
 			return false;

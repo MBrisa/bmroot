@@ -9,6 +9,8 @@ import java.util.Set;
 
 import org.junit.Test;
 
+import recycle_bin.LazyRepeatHandler;
+
 public class TreeBuilderTest {
 	
 	@Test
@@ -22,28 +24,28 @@ public class TreeBuilderTest {
 		int n__2 = -2;
 		int n__3 = -3;
 		
-		TreeBuilder<Integer> builder = new TreeBuilder<>(TestUtil.serialCondition);
+		TreeBuilder<Integer> builder = new TreeBuilder<>(TestUtil.serialConditionToBuild);
 		
 		/*
 		 0
 		 */
 		builder.add(n_0); 
-//		assertEquals(1,builder.nodeSize()); 
-//		assertEquals(1,builder.treeSize()); 
-//		dcTest(builder,n_0,0);
-//		iteratorTest(builder,n_0);
-//		scrapTest(builder);
+		assertEquals(1,builder.nodeSize()); 
+		assertEquals(1,builder.treeSize()); 
+		dcTest(builder,n_0,0);
+		iteratorTest(builder,n_0);
+		scrapTest(builder);
 		
 		/*
 		 0
 		 1
 		 */
 		builder.add(n_1);
-//		assertEquals(2,builder.nodeSize()); 
-//		assertEquals(1,builder.treeSize()); 
-//		dcTest(builder,n_0,0,n_1);
-//		iteratorTest(builder,n_0,n_1);
-//		scrapTest(builder);
+		assertEquals(2,builder.nodeSize()); 
+		assertEquals(1,builder.treeSize()); 
+		dcTest(builder,n_0,0,n_1);
+		iteratorTest(builder,n_0,n_1);
+		scrapTest(builder);
 		
 		/*
 		 -1
@@ -51,10 +53,10 @@ public class TreeBuilderTest {
 		 1
 		 */
 		builder.add(n__1);
-//		assertEquals(3,builder.nodeSize()); 
-//		assertEquals(1,builder.treeSize()); 
-//		dcTest(builder,n__1,0, n_0);
-//		dcTest(builder,n_0,0, n_1);
+		assertEquals(3,builder.nodeSize()); 
+		assertEquals(1,builder.treeSize()); 
+		dcTest(builder,n__1,0, n_0);
+		dcTest(builder,n_0,0, n_1);
 		dcTest(builder,n_1,0);
 		iteratorTest(builder,n__1,n_0,n_1);
 		scrapTest(builder);
@@ -68,9 +70,9 @@ public class TreeBuilderTest {
 		builder.add(n__3);
 		assertEquals(4,builder.nodeSize()); 
 		assertEquals(2,builder.treeSize()); 
-//		dcTest(builder,n__1,0, n_0);
-//		dcTest(builder,n_0,0, n_1);
-//		dcTest(builder,n_1,0);
+		dcTest(builder,n__1,0, n_0);
+		dcTest(builder,n_0,0, n_1);
+		dcTest(builder,n_1,0);
 		iteratorTest(builder,n__1,n_0,n_1,n__3);
 		scrapTest(builder);
 		
@@ -83,9 +85,9 @@ public class TreeBuilderTest {
 		builder.add(n_3);
 		assertEquals(5,builder.nodeSize()); 
 		assertEquals(3,builder.treeSize()); 
-//		dcTest(builder,n__1,0, n_0);
-//		dcTest(builder,n_0,0, n_1);
-//		dcTest(builder,n_1,0);
+		dcTest(builder,n__1,0, n_0);
+		dcTest(builder,n_0,0, n_1);
+		dcTest(builder,n_1,0);
 		iteratorTest(builder,n__1,n_0,n_1,n__3,n_3);
 		scrapTest(builder);
 		
@@ -97,9 +99,9 @@ public class TreeBuilderTest {
 		}
 		assertEquals(5,builder.nodeSize()); 
 		assertEquals(3,builder.treeSize()); 
-//		dcTest(builder,n__1,0, n_0);
-//		dcTest(builder,n_0,0, n_1);
-//		dcTest(builder,n_1,0);
+		dcTest(builder,n__1,0, n_0);
+		dcTest(builder,n_0,0, n_1);
+		dcTest(builder,n_1,0);
 		iteratorTest(builder,n__1,n_0,n_1,n__3,n_3);
 		scrapTest(builder);
 		
@@ -111,9 +113,9 @@ public class TreeBuilderTest {
 		}
 		assertEquals(5,builder.nodeSize()); 
 		assertEquals(3,builder.treeSize()); 
-//		dcTest(builder,n__1,0, n_0);
-//		dcTest(builder,n_0,0, n_1);
-//		dcTest(builder,n_1,0);
+		dcTest(builder,n__1,0, n_0);
+		dcTest(builder,n_0,0, n_1);
+		dcTest(builder,n_1,0);
 		iteratorTest(builder,n__1,n_0,n_1,n__3,n_3);
 		scrapTest(builder);
 		
@@ -127,19 +129,19 @@ public class TreeBuilderTest {
 		builder.add(n__2);
 		assertEquals(6,builder.nodeSize()); 
 		assertEquals(2,builder.treeSize()); 
-//		dcTest(builder,n__3,0, n__2);
-//		dcTest(builder,n__2,0, n__1);
-//		dcTest(builder,n__1,0, n_0);
-//		dcTest(builder,n_0,0, n_1);
-//		dcTest(builder,n_1,0);
+		dcTest(builder,n__3,0, n__2);
+		dcTest(builder,n__2,0, n__1);
+		dcTest(builder,n__1,0, n_0);
+		dcTest(builder,n_0,0, n_1);
+		dcTest(builder,n_1,0);
 		iteratorTest(builder,n__3,n__2,n__1,n_0,n_1,n_3);
 		scrapTest(builder);
 		
 	}
 	
-//	@Test
+	@Test
 	public void rootStrict(){
-		TreeBuilder<Integer> builder = new TreeBuilder<>(TestUtil.raySerialCondition,new LazyRepeatHandler<Integer>());
+		TreeBuilder<Integer> builder = new TreeBuilder<>(TestUtil.raySerialConditionToBuild);
 		
 		builder.add(1);
 		assertEquals(0,builder.nodeSize());
@@ -149,7 +151,7 @@ public class TreeBuilderTest {
 		
 	}
 	
-//	@Test
+	@Test
 	public void repeatable(){
 		
 		int n_0 = 0;
@@ -163,7 +165,7 @@ public class TreeBuilderTest {
 		int n__2 = -2;
 		int n__3 = -3;
 		
-		TreeBuilder<Integer> builder = new TreeBuilder<>(TestUtil.serialCondition,new LazyRepeatHandler<Integer>());
+		TreeBuilder<Integer> builder = new TreeBuilder<>(TestUtil.serialConditionToBuild);
 		
 		/*
 		 0
@@ -330,8 +332,26 @@ public class TreeBuilderTest {
 		
 	}
 	
+	/**
+	 * 直接子节点的测试
+	 * @param builder
+	 * @param pe
+	 * @param index
+	 * @param children
+	 */
 	private <E> void dcTest(TreeBuilder<E> builder,E pe,int index,Object... children){
-		TreeNode<E> parent = builder.getNode(pe, index);
+		List<TreeNode<E>> roots = builder.getRoots();
+		int pi = 0;
+		TreeNode<E> parent = null;
+		OUT:for(TreeNode<E> root : roots){
+			for(TreeNode<E> node : root.retrieveAllNode()){
+				if(node.entity() == pe && (pi++ == index)){
+					parent = node;
+					break OUT;
+				}
+			}
+		}
+		assertTrue(parent != null);
 		assertEquals(children.length , parent.children().size());
 		int i = 0;
 		for(Object child : children){
@@ -344,10 +364,8 @@ public class TreeBuilderTest {
 		List<TreeNode<E>> roots = builder.retrieveRoots();
 		Set<Object> s = new HashSet<>();
 		for(TreeNode<E> root : roots){
-//			assertEquals(nodes[i++],root.entity());
 			for(E child : root){
 				s.add(child);
-//				assertEquals(nodes[i++],child.entity());
 			}
 		}
 		HashSet<Object> sa = new HashSet<>();
@@ -365,5 +383,6 @@ public class TreeBuilderTest {
 			assertEquals(children[i++],child);
 		}
 	}
+	
 	
 }

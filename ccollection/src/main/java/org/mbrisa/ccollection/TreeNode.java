@@ -11,15 +11,15 @@ public class TreeNode<E> implements Cloneable, Iterable<E> {
 	private int indexInParent = -1; // 该值是当前节点在其父节点 allNodes 中的 index 。当前节点如果没有父节点，该值为 -1 ，如果有父节点该值大于0
 	private List<DCIndex> dcis = new ArrayList<>(); // direct children index in allNodex
 	private final E e;
-	private final LinkCondition<E> condition;
+	private final LinkedCondition<E> condition;
 	private LinkedList<TreeNode<E>> allNodes = new LinkedList<TreeNode<E>>(); 
 	
 	@SuppressWarnings("unchecked")
 	public TreeNode(E e) {
-		this(e, NoLimitLinkCondition.INSTANCE);
+		this(e, NoLimitLinkedCondition.getInstance());
 	}
 	
-	public TreeNode(E e,LinkCondition<E> condition) {
+	public TreeNode(E e,LinkedCondition<E> condition) {
 		this.e = e;
 		this.condition = condition;
 		this.allNodes.add(this);
@@ -28,7 +28,7 @@ public class TreeNode<E> implements Cloneable, Iterable<E> {
 	/**
 	 * @return the condition
 	 */
-	public LinkCondition<E> getCondition() {
+	public LinkedCondition<E> getCondition() {
 		return condition;
 	}
 	
@@ -162,9 +162,12 @@ public class TreeNode<E> implements Cloneable, Iterable<E> {
 		return this.new EIterator();
 	}
 	
+	List<TreeNode<E>> retrieveAllNode(){
+		return new ArrayList<>(this.allNodes);
+	}
 	
 	@Override
-	protected TreeNode<E> clone() {
+	public TreeNode<E> clone() {
 		int indexInRoot = 0;
 		TreeNode<E> node = this;
 		while(node.parent != null){
@@ -210,42 +213,6 @@ public class TreeNode<E> implements Cloneable, Iterable<E> {
 		}
 	}
 	
-	
-	@SuppressWarnings("rawtypes")
-	private static class NoLimitLinkCondition implements LinkCondition{
-		private static final NoLimitLinkCondition INSTANCE = new NoLimitLinkCondition(); 
-		private NoLimitLinkCondition() {
-		}
-		@Override
-		public boolean appendable(Object target, Object addition) {
-			return true;
-		}
-		@Override
-		public boolean headable(Object addition) {
-			return true;
-		}
-		/* (non-Javadoc)
-		 * @see java.lang.Object#hashCode()
-		 */
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + NoLimitLinkCondition.class.hashCode();
-			return result;
-		}
-		/* (non-Javadoc)
-		 * @see java.lang.Object#equals(java.lang.Object)
-		 */
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			return this.getClass() == obj.getClass();
-		}
-	}
 	
 
 	private static class DCIndex{

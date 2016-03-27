@@ -7,38 +7,33 @@ import java.util.List;
 public class MChainBuilder<E> {
 	
 	private final LinkedList<Chain<E>> chainList = new LinkedList<>();
-	private final LinkCondition<E> chainCondition;
+	private final BuildingCondition<E> chainCondition;
 	private final NoCompleteHandler noCompletion;
 	private final LinkedList<E> scrap = new LinkedList<>();
 	
-	public MChainBuilder(LinkCondition<E> chainCondition,NoCompleteHandler handler) {
+	public MChainBuilder(BuildingCondition<E> chainCondition,NoCompleteHandler handler) {
 		this.chainCondition = chainCondition;
 		this.noCompletion = handler;
 	}
 	
-	public MChainBuilder(LinkCondition<E> chainCondition) {
+	public MChainBuilder(BuildingCondition<E> chainCondition) {
 		this(chainCondition, new GruffNoCompleteHandler());
 	}
 	
 	public void addNode(E node) {
-		boolean linked = false;
 		for(Chain<E> chain : this.chainList){
 			if(chain.add(node)){
-				linked = true;
-				break;
+				reLink();
+				return;
 			}
 		}
-		if(linked){
-			reLink();
-		}else{
-			if(chainCondition.headable(node)){
-				this.chainList.add(new Chain<E>(node,chainCondition));
-				if(!scrap.isEmpty()){
-					reLink();
-				}
-			}else{
-				scrap.add(node);
+		if(chainCondition.headable(node)){
+			this.chainList.add(new Chain<E>(node,chainCondition));
+			if(!scrap.isEmpty()){ // all chain can not link the new node.so if scrap is empty ,no need relink on old chain
+				reLink();
 			}
+		}else{
+			scrap.add(node);
 		}
 	}
 	

@@ -1,6 +1,8 @@
-package org.mbrisa.ccollection;
+package recycle_bin;
 
 import java.util.List;
+
+import org.mbrisa.ccollection.NodeRepeatException;
 
 public class SingleNodeHandler<E> implements NodeRepeatHandler<E> {
 

@@ -9,7 +9,7 @@ public class MChainBuilderTest{
 	
 	@Test
 	public void simpleTest(){
-		MChainBuilder<Integer> builder = new MChainBuilder<Integer>(TestUtil.serialCondition);
+		MChainBuilder<Integer> builder = new MChainBuilder<Integer>(TestUtil.serialConditionToBuild);
 		
 		builder.addNode(0);
 		assertEquals(1,builder.chainCount());
@@ -93,7 +93,7 @@ public class MChainBuilderTest{
 	
 	@Test
 	public void go(){
-		MChainBuilder<Integer> builder = new MChainBuilder<Integer>(TestUtil.raySerialCondition);
+		MChainBuilder<Integer> builder = new MChainBuilder<Integer>(TestUtil.raySerialConditionToBuild);
 		
 		builder.addNode(1);
 		assertEquals(0,builder.chainCount());
