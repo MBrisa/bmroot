@@ -41,6 +41,30 @@ public class TreeNodeTest {
 		iteratorTest(node, 0);
 		assertTrue(node.add(1));
 		assertFalse(node.add(2));
+		
+		LinkedCondition<Integer> rejectNullCondition = new LinkedCondition<Integer>() {
+			@Override
+			public boolean appendable(Integer target, Integer addition) {
+				return true;
+			}
+			@Override
+			public boolean rejectNull() {
+				return true;
+			}
+		};
+		
+		try{
+			new TreeNode<Integer>(null,rejectNullCondition);
+			assertTrue(false);
+		}catch(NullPointerException e){
+		}
+		
+		TreeNode<Integer> treeNode = new TreeNode<Integer>(0,rejectNullCondition);
+		try{
+			treeNode.add((Integer)null);
+			assertTrue(false);
+		}catch(NullPointerException e){
+		}
 	}
 	
 	@Test
@@ -50,10 +74,16 @@ public class TreeNodeTest {
 		TreeNode<Integer> c1 = new TreeNode<Integer>(1);
 		TreeNode<Integer> c2 = new TreeNode<Integer>(2);
 		
+		rootTest(root, root);
+		rootTest(c1, c1);
+		rootTest(c2, c2);
+		
 		iteratorTest(root, 0);
 		assertTrue(root.add(c1));
+		rootTest(root, c1);
 		iteratorTest(root, 0,1);
 		assertTrue(root.add(c2));
+		rootTest(root, c2);
 		iteratorTest(root, 0,1,2);
 		iteratorTest(c1, 1);
 		iteratorTest(c2, 2);
@@ -63,6 +93,8 @@ public class TreeNodeTest {
 		cloneTest(root);
 		cloneTest(c1);
 		cloneTest(c2);
+		
+		rootTest(root, root);
 	}
 	
 	@Test
@@ -72,8 +104,11 @@ public class TreeNodeTest {
 		TreeNode<Integer> c1 = new TreeNode<Integer>(1);
 		TreeNode<Integer> c2 = new TreeNode<Integer>(2);
 		
+		
 		root.add(c1);
+		rootTest(root, c1);
 		c1.add(c2);
+		rootTest(root, c2);
 		iteratorTest(root, 0,1,2);
 		iteratorTest(c1, 1,2);
 		iteratorTest(c2, 2);
@@ -83,6 +118,8 @@ public class TreeNodeTest {
 		cloneTest(root);
 		cloneTest(c1);
 		cloneTest(c2);
+		
+		rootTest(root, root);
 	}
 	
 	@Test
@@ -92,8 +129,12 @@ public class TreeNodeTest {
 		TreeNode<Integer> subRoot = new TreeNode<>(1);
 		TreeNode<Integer> subChild = new TreeNode<>(2);
 		
+		
 		subRoot.add(subChild);
+		rootTest(subRoot, subChild);
 		root.add(subRoot);
+		rootTest(root,subRoot);
+		rootTest(root,subChild);
 		iteratorTest(root, 0,1,2);
 		iteratorTest(subRoot, 1,2);
 		iteratorTest(subChild, 2);
@@ -103,6 +144,8 @@ public class TreeNodeTest {
 		cloneTest(root);
 		cloneTest(subRoot);
 		cloneTest(subChild);
+		
+		rootTest(root,root);
 	}
 	
 	@Test
@@ -121,6 +164,9 @@ public class TreeNodeTest {
 		dcTest(root, intNull);
 		cloneTest(root);
 		cloneTest(intNull);
+		
+		rootTest(root,intNull);
+		rootTest(root,root);
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -161,11 +207,22 @@ public class TreeNodeTest {
 		
 //		逆序添加
 		assertTrue(sbb.add(scc));
+		rootTest(sbb,scc);
 		assertTrue(twoCharRoot.add(sbb));
+		rootTest(twoCharRoot,sbb);
+		rootTest(twoCharRoot,scc);
 		assertTrue(oneCharRoot.add(sb));
+		rootTest(oneCharRoot,sb);
 		assertTrue(oneCharRoot.add(sc));
+		rootTest(oneCharRoot,sc);
 		assertTrue(stringRoot.add(oneCharRoot));
+		rootTest(stringRoot,oneCharRoot);
+		rootTest(stringRoot,sb);
+		rootTest(stringRoot,sc);
 		assertTrue(stringRoot.add(twoCharRoot));
+		rootTest(stringRoot,twoCharRoot);
+		rootTest(stringRoot,sbb);
+		rootTest(stringRoot,scc);
 		assertTrue(root0.add(stringRoot));
 		
 //		无序添加
@@ -233,6 +290,24 @@ public class TreeNodeTest {
 		cloneTest(stringClass);
 		cloneTest(intgerClass);
 		
+		rootTest(root0,root0);
+		rootTest(root0,numberRoot);
+		rootTest(root0,stringRoot);
+		rootTest(root0,classRoot);
+		rootTest(root0,intRoot);
+		rootTest(root0,int1);
+		rootTest(root0,int50);
+		rootTest(root0,longRoot);
+		rootTest(root0,long1);
+		rootTest(root0,long2);
+		rootTest(root0,oneCharRoot);
+		rootTest(root0,sb);
+		rootTest(root0,sc);
+		rootTest(root0,twoCharRoot);
+		rootTest(root0,sbb);
+		rootTest(root0,scc);
+		rootTest(root0,stringClass);
+		rootTest(root0,intgerClass);
 		
 	}
 	
@@ -258,6 +333,11 @@ public class TreeNodeTest {
 			public boolean appendable(Person target, Person addition) {
 				return target.name.equals(addition.name) && target.age >= addition.age;
 			}
+			
+			@Override
+			public boolean rejectNull() {
+				return true;
+			}
 		};
 		
 		final BuildingCondition<Person> ageCondition = new BuildingCondition<Person>() {
@@ -277,6 +357,11 @@ public class TreeNodeTest {
 			@Override
 			public boolean appendable(Person target, Person addition) {
 				return target.age >= addition.age;
+			}
+			
+			@Override
+			public boolean rejectNull() {
+				return true;
 			}
 		};
 		
@@ -315,6 +400,10 @@ public class TreeNodeTest {
 		}
 	}
 	
+	private void rootTest(TreeNode<?> expect,TreeNode<?> target){
+		assertTrue(expect == target.getRoot());
+	}
+	
 	/**
 	 * direct children test
 	 */
@@ -339,6 +428,8 @@ public class TreeNodeTest {
 	}
 	
 	private void cloneTest(TreeNode<?> original,TreeNode<?> cloned){
+		assertFalse(original.getRoot() == cloned.getRoot());
+		assertTrue(original.getRoot().entity() == cloned.getRoot().entity());
 		assertEquals(original.size(),cloned.size());
 		int i = 0;
 		for(Object entry : original){

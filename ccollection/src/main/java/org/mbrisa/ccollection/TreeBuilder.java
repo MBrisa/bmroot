@@ -1,117 +1,62 @@
 package org.mbrisa.ccollection;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 
 public class TreeBuilder<E> {
-	
+
+	private TreeNode<E> root;
+	private final ArrayList<TreeNode<E>> scrap = new ArrayList<>();
 	private final BuildingCondition<E> condition;
-	private final List<TreeNode<E>> rootNodes = new LinkedList<>();
-	private final List<TreeNode<E>> scrap = new ArrayList<>();
-	
 	
 	public TreeBuilder(BuildingCondition<E> condition) {
 		this.condition = condition;
 	}
 	
-	public void add(E node){
-		TreeNode<E> addition = new TreeNode<>(node,this.condition);
-		
-		RelinkStrategy additionState = toAdd(addition);
-		if(additionState.added()){
-			additionState.handle(this,addition);
-			return;
+	public void add(E e){
+		if(toAdd(new TreeNode<>(e, this.condition))){
+			relinkFormScrap();
 		}
-		this.scrap.add(addition);
 	}
 	
-	private RelinkStrategy toAdd(TreeNode<E> addition){
-		for(TreeNode<E> root : rootNodes){
-			if(addition.add(root)){ // addition is root
-				upsertRoot(addition, root);
-				return RelinkStrategy.RELINK_EACH_OTHER;
+	private boolean toAdd(TreeNode<E> addition){
+		assert(addition.getParent() == null);
+		if(this.root == null){
+			if(this.condition.headable(addition.entity())){
+				this.root = addition;
+				return true;
 			}
-			for(TreeNode<E> node : root.retrieveAllNode()){
-				if(node.add(addition)){ // addition is child
-					return RelinkStrategy.PULL_OTHER;
-				}
+			this.scrap.add(addition);
+			return false;
+		}
+		for(TreeNode<E> node : this.root.retrieveAllNode()){
+			if(node.add(addition)){ // addition is child
+				return true;
 			}
 		}
-		if(this.condition.headable(addition.entity())){
-			upsertRoot(addition, null);
-			if(this.scrap.size() > 0){
-				return RelinkStrategy.SCRAP_NOLY;
-			}
+		if(this.condition.headable(addition.entity()) && addition.add(this.root)){
+			this.root = addition;
+			return true;
 		}
-		return RelinkStrategy.NO_RELINK;
+		return false;
 	}
 	
-	
-	private void upsertRoot(TreeNode<E> addition, TreeNode<E> original){
-		if(original != null){
-			this.removeRoot(original);
-		}
-		this.rootNodes.add(addition);
+	public TreeNode<E> getRoot(){
+		return this.root;
 	}
 	
-	private void removeRoot(TreeNode<E> root){
-		if(!this.rootNodes.remove(root) ){
-			assert(false);// must exist original in rootNodes and must addable
-			throw new RuntimeException("..");
-		}
+	public TreeNode<E> retrieveRoot(){
+		validateScrap();
+		return this.getRoot();
 	}
 	
-	public int treeSize(){
-		return this.rootNodes.size();
-	}
-	
-	public int nodeSize(){
-		int nodeSize = 0;
-		for(TreeNode<E> root : rootNodes){
-			nodeSize += root.size();
-		}
-		return nodeSize;
-	}
-
-//	/**
-//	 * for unit test
-//	 * @param e
-//	 * @param index
-//	 * @return
-//	 */
-//	TreeNode<E> getNode(E e,int index) {
-//		List<TreeNode<E>> nodeList = this.log.get(e);
-//		if(nodeList == null || nodeList.size() <= index){
-//			return null;
-//		}
-//		return nodeList.get(index).clone();
-//	}
-	
-	public List<TreeNode<E>> getRoots(){
-		ArrayList<TreeNode<E>> result = new ArrayList<>();
-		for(TreeNode<E> node : this.rootNodes){
-			result.add(node.clone());
+	public List<E> getScrap(){
+		ArrayList<E> result = new ArrayList<>();
+		for(TreeNode<E> st : this.scrap){
+			result.add(st.entity());
 		}
 		return result;
-	}
-	
-	public List<TreeNode<E>> retrieveRoots(){
-		validateScrap();
-		return getRoots();
-	}
-	
-	public TreeNode<E> getFirstRoot() {
-		if(this.rootNodes.size() == 0){
-			return null;
-		}
-		return this.rootNodes.get(0).clone();
-	}
-	
-	public TreeNode<E> retrieveFirstRoot(){
-		validateScrap();
-		return getFirstRoot();
 	}
 	
 	private void validateScrap(){
@@ -119,95 +64,17 @@ public class TreeBuilder<E> {
 			throw new NoCompleteException();
 		}
 	}
-	
-	public List<E> getScrap(){
-		ArrayList<E> result = new ArrayList<>();
-		for(TreeNode<E> node : this.scrap){
-			result.add(node.entity());
-		}
-		return result;
+
+	public Object nodeSize() {
+		return this.root == null ? 0 : this.root.size();
 	}
 	
-	private static enum RelinkStrategy{
-		NO_RELINK,
-		
-		SCRAP_NOLY{
-			@Override
-			public boolean added() {
-				return true;
+	private void relinkFormScrap(){
+		for(TreeNode<E> node : this.scrap){
+			if(this.toAdd(node)){
+				this.scrap.remove(node);
+				relinkFormScrap();
 			}
-			
-			@Override
-			public <E> void handle(TreeBuilder<E> builder,TreeNode<E> lastAddition) {
-				for(TreeNode<E> node : builder.scrap){
-					RelinkStrategy state = builder.toAdd(node);
-					if(state.added()){
-						builder.scrap.remove(node);
-						state.handle(builder,node);
-						return ;
-					}
-				}
-			}
-		},
-		
-		RELINK_EACH_OTHER{
-			@Override
-			public boolean added() {
-				return true;
-			}
-			
-			@Override
-			public <E> void handle(TreeBuilder<E> builder,TreeNode<E> lastAddition) {
-				assert(lastAddition.getParent() == null);
-				for(TreeNode<E> root : builder.rootNodes){
-					if(root == lastAddition){
-						continue;
-					}
-					if(lastAddition.add(root)){
-						builder.removeRoot(root);
-						this.handle(builder, lastAddition);
-						return;
-					}
-					for(TreeNode<E> node : root.retrieveAllNode()){
-						if(node.add(lastAddition)){
-							builder.removeRoot(lastAddition);
-							PULL_OTHER.handle(builder, lastAddition);
-							return;
-						}
-					}
-				}
-				SCRAP_NOLY.handle(builder, lastAddition);
-			}
-			
-		},
-		
-		PULL_OTHER{
-			@Override
-			public boolean added() {
-				return true;
-			}
-			
-			@Override
-			public <E> void handle(TreeBuilder<E> builder, TreeNode<E> lastAddition) {
-				assert(lastAddition.getParent() != null);
-				for(TreeNode<E> root : builder.rootNodes){
-					if(lastAddition.add(root)){
-						builder.removeRoot(root);
-						this.handle(builder, lastAddition);
-						return;
-					}
-				}
-				SCRAP_NOLY.handle(builder, lastAddition);
-			}
-		};
-		
-		public boolean added(){
-			return false;
 		}
-		
-		public <E> void handle(TreeBuilder<E> builder,TreeNode<E> lastAddition) {
-			throw new UnsupportedOperationException();
-		}
-		
 	}
 }

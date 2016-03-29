@@ -40,6 +40,11 @@ public class TestUtil {
 			return this.getClass().equals(ob.getClass());
 		}
 		
+		@Override
+		public boolean rejectNull() {
+			return false;
+		}
+		
 	}
 	
 	public static class SerialConditionToBuild extends SerialCondition implements BuildingCondition<Integer>{
@@ -80,6 +85,11 @@ public class TestUtil {
 				throw new NullPointerException("target is "+ target +" addition is "+addition);
 			}
 			return new Integer(target.getId()).equals(addition.getParentId());
+		}
+		
+		@Override
+		public boolean rejectNull() {
+			return true;
 		}
 	}
 	

@@ -16,4 +16,9 @@ class NoLimitLinkedCondition implements LinkedCondition {
 	public boolean appendable(Object target, Object addition) {
 		return true;
 	}
+	
+	@Override
+	public boolean rejectNull() {
+		return false;
+	}
 }

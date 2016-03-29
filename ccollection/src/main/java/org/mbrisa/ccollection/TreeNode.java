@@ -7,6 +7,7 @@ import java.util.List;
 
 public class TreeNode<E> implements Cloneable, Iterable<E> {
 
+	private TreeNode<E> root;
 	private TreeNode<E> parent; 
 	private int indexInParent = -1; // 该值是当前节点在其父节点 allNodes 中的 index 。当前节点如果没有父节点，该值为 -1 ，如果有父节点该值大于0
 	private List<DCIndex> dcis = new ArrayList<>(); // direct children index in allNodex
@@ -20,9 +21,13 @@ public class TreeNode<E> implements Cloneable, Iterable<E> {
 	}
 	
 	public TreeNode(E e,LinkedCondition<E> condition) {
+		if(e == null && condition.rejectNull()){
+			throw new NullPointerException();
+		}
 		this.e = e;
 		this.condition = condition;
 		this.allNodes.add(this);
+		this.root = this;
 	}
 	
 	/**
@@ -47,6 +52,10 @@ public class TreeNode<E> implements Cloneable, Iterable<E> {
 			return false;
 		}
 		child.setParent(this);
+		child.setRoot(this.getRoot());
+		for(TreeNode<E> cc : child.retrieveAllNode()){
+			cc.setRoot(this.getRoot());
+		}
 		
 		int index = this.size(); //child 在 allNodes 列表中的下标
 		this.dcis.add(new DCIndex(index)); //记录 child 为当前 node 的直接子节点，并记录其在 allNodes 列表中的下标
@@ -95,7 +104,7 @@ public class TreeNode<E> implements Cloneable, Iterable<E> {
 	 * @return
 	 */
 	public boolean remove(TreeNode<E> child){
-//		TODO do not forget to change the size,set child 'parent' property to null, remove node from allNodes
+//		TODO do not forget to change the size,set child 'parent','root' property to null, remove node from allNodes
 		throw new UnsupportedOperationException();
 	}
 	
@@ -126,9 +135,21 @@ public class TreeNode<E> implements Cloneable, Iterable<E> {
 	public TreeNode<E> getParent() {
 		return parent;
 	}
+	
+	public TreeNode<E> getRoot() {
+		return this.root;
+	}
+	
+	List<TreeNode<E>> retrieveAllNode(){
+		return new ArrayList<>(this.allNodes);
+	}
 
 	private void setParent(TreeNode<E> parent) {
 		this.parent = parent;
+	}
+	
+	private void setRoot(TreeNode<E> root){
+		this.root = root;
 	}
 	
 	@Override
@@ -162,17 +183,14 @@ public class TreeNode<E> implements Cloneable, Iterable<E> {
 		return this.new EIterator();
 	}
 	
-	List<TreeNode<E>> retrieveAllNode(){
-		return new ArrayList<>(this.allNodes);
-	}
 	
 	@Override
 	public TreeNode<E> clone() {
 		int indexInRoot = 0;
 		TreeNode<E> node = this;
-		while(node.parent != null){
+		while(node.getParent() != null){
 			indexInRoot += node.indexInParent;
-			node = node.parent;
+			node = node.getParent();
 		}
 		TreeNode<E> root = node;
 		TreeNode<E> rootCloned = root.cloneNode();
@@ -192,7 +210,8 @@ public class TreeNode<E> implements Cloneable, Iterable<E> {
 		cloned.allNodes = new LinkedList<>();
 		cloned.dcis = new ArrayList<>();
 		cloned.indexInParent = -1;
-		cloned.parent = null;
+		cloned.setParent(null);
+		cloned.setRoot(cloned);
 		cloned.allNodes.add(cloned);
 		for(TreeNode<E> child : this.children()){
 			TreeNode<E> childClone = child.cloneNode();
@@ -211,6 +230,11 @@ public class TreeNode<E> implements Cloneable, Iterable<E> {
 		public E next() {
 			return iterator.next().entity();
 		}
+		
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
 	}
 	
 	
@@ -226,21 +250,6 @@ public class TreeNode<E> implements Cloneable, Iterable<E> {
 		public int getIndex(){
 			return this.index;
 		}
-	}
-	
-	public static void main(String[] args) {
-		LinkedList<Integer> integers = new LinkedList<Integer>();
-		integers.add(-1);
-		integers.add(0);
-		integers.add(3);
-		
-		LinkedList<Integer> sub = new LinkedList<Integer>();
-		sub.add(0);
-		sub.add(1);
-		sub.add(2);
-		integers.addAll(2, sub);
-		System.out.println(integers);
-		System.out.println(integers.subList(1, integers.size()));
 	}
 	
 }
