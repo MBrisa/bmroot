@@ -47,7 +47,7 @@ public class TreeNode<E> implements Cloneable, Iterable<E> {
 		return addToChild(new TreeNode<E>(child, this.condition));
 	}
 	
-	boolean addToChild(TreeNode<E> child){
+	private boolean addToChild(TreeNode<E> child){
 		if(!this.condition.appendable(this.entity(), child.entity())){
 			return false;
 		}
@@ -67,7 +67,7 @@ public class TreeNode<E> implements Cloneable, Iterable<E> {
 	}
 	
 	
-	void validateTreeNode(TreeNode<E> target){
+	private void validateTreeNode(TreeNode<E> target){
 		if(target== null )
 			throw new NullPointerException();
 		if(!this.condition.equals(target.condition))

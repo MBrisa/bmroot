@@ -9,60 +9,67 @@ public class ChainBuilderTest {
 	@Test
 	public void go(){
 		ChainBuilder<Integer> builder = new ChainBuilder<Integer>(TestUtil.serialConditionToBuild,new IgnoreNoCompleteHandler());
-		builder.addNode(0);
-		TestUtil.orderTest(builder.retrieveChain(), 0);
+		builder.add(0);
+		TestUtil.orderTest(builder.retrieve(), 0);
+		assertTrue(builder.isComplete());
 		
-		builder.addNode(2);
-		TestUtil.orderTest(builder.retrieveChain(), 0);
+		builder.add(2);
+		TestUtil.orderTest(builder.retrieve(), 0);
+		assertFalse(builder.isComplete());
 		
-		builder.addNode(-2);
-		TestUtil.orderTest(builder.retrieveChain(), 0);
+		builder.add(-2);
+		TestUtil.orderTest(builder.retrieve(), 0);
+		assertFalse(builder.isComplete());
 		
-		builder.addNode(1);
-		TestUtil.orderTest(builder.retrieveChain(), 0,1,2);
+		builder.add(1);
+		TestUtil.orderTest(builder.retrieve(), 0,1,2);
+		assertFalse(builder.isComplete());
 		
-		builder.addNode(-1);
-		TestUtil.orderTest(builder.retrieveChain(), -2,-1,0,1,2);
+		builder.add(-1);
+		TestUtil.orderTest(builder.retrieve(), -2,-1,0,1,2);
+		assertTrue(builder.isComplete());
+		
+		cleanTest(builder);
 	}
 	
 	@Test
 	public void go2(){
 		ChainBuilder<Integer> builder = new ChainBuilder<Integer>(TestUtil.serialConditionToBuild,new GruffNoCompleteHandler());
-		assertEquals(0,builder.retrieveChain().size());
+		assertNull(builder.retrieve());
 		
-		builder.addNode(1);
-		TestUtil.orderTest(builder.retrieveChain(), 1);
+		builder.add(1);
+		TestUtil.orderTest(builder.retrieve(), 1);
 		
-		builder.addNode(3);
+		builder.add(3);
 		try{
-			builder.retrieveChain();
+			builder.retrieve();
 			assertTrue(false);
 		}catch(NoCompleteException e){
 			assertTrue(true);
 		}
+		
+		cleanTest(builder);
 	}
 	
 	@Test
 	public void go3(){
 		ChainBuilder<Integer> builder = new ChainBuilder<Integer>(TestUtil.raySerialConditionToBuild,new GruffNoCompleteHandler());
 		
-		builder.addNode(1);
+		builder.add(1);
 		try{
-			builder.retrieveChain();
+			builder.retrieve();
 			assertTrue(false);
 		}catch(Exception e){
-			assertTrue(true);
 		}
 		
-		builder.addNode(0);
-		TestUtil.orderTest(builder.retrieveChain(), 0,1);
+		builder.add(0);
+		TestUtil.orderTest(builder.retrieve(), 0,1);
 		
-		builder.addNode(-1);
+		builder.add(-1);
 		try{
-			builder.retrieveChain();
+			builder.retrieve();
 			assertTrue(false);
 		}catch(Exception e){
-			assertTrue(true);
 		}
 		assertEquals(1,builder.retrieveScrap().size());
 		Integer ci = -1;
@@ -70,12 +77,11 @@ public class ChainBuilderTest {
 			assertEquals(ci++,item);
 		}
 		
-		builder.addNode(0);
+		builder.add(0);
 		try{
-			builder.retrieveChain();
+			builder.retrieve();
 			assertTrue(false);
 		}catch(Exception e){
-			assertTrue(true);
 		}
 		assertEquals(2,builder.retrieveScrap().size());
 		ci = -1;
@@ -83,12 +89,11 @@ public class ChainBuilderTest {
 			assertEquals(ci++,item);
 		}
 		
-		builder.addNode(1);
+		builder.add(1);
 		try{
-			builder.retrieveChain();
+			builder.retrieve();
 			assertTrue(false);
 		}catch(Exception e){
-			assertTrue(true);
 		}
 		assertEquals(3,builder.retrieveScrap().size());
 		ci = -1;
@@ -96,7 +101,14 @@ public class ChainBuilderTest {
 			assertEquals(ci++,item);
 		}
 		
-		
+		cleanTest(builder);
+	}
+	
+	private void cleanTest(ChainBuilder<?> builder){
+		builder.clear();
+		assert(builder.isComplete());
+		assertNull(builder.retrieve());
+		assertEquals(0,builder.retrieveScrap().size());
 	}
 	
 

@@ -81,26 +81,6 @@ public class Chain<E> implements Collection<E>,Cloneable{
 		this.setContainer(cloned.getContainer());
 		return true;
 		
-		/*
-		E targetHead = subChain.getFirst();
-		E targetTail = subChain.getLast();
-		if(addToTail(targetHead)){
-			for(int i = 1; i < subChain.size(); i++){
-				E target = subChain.get(i);
-				boolean toTail = addToTail(target);
-				assert(toTail);
-			}
-			return true;
-		}
-		if(addToHead(targetTail)){
-			for(int i = subChain.size() - 2; i >= 0; i--){
-				E target = subChain.get(i);
-				boolean toHead = addToHead(target);
-				assert(toHead);
-			}
-			return true;
-		}
-		return false;*/
 	}
 	
 	@Override

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-public class MChainBuilder<E> {
+public class MChainBuilder<E> implements CCBuilder<E> {
 	
 	private final LinkedList<Chain<E>> chainList = new LinkedList<>();
 	private final BuildingCondition<E> chainCondition;
@@ -20,7 +20,7 @@ public class MChainBuilder<E> {
 		this(chainCondition, new GruffNoCompleteHandler());
 	}
 	
-	public void addNode(E node) {
+	public void add(E node) {
 		for(Chain<E> chain : this.chainList){
 			if(chain.add(node)){
 				reLink();
@@ -38,7 +38,6 @@ public class MChainBuilder<E> {
 	}
 	
 	private void reLink() {
-		
 		if(this.scrap.size() > 0){
 			for(E e : scrap){
 				for(Chain<E> chain : this.chainList){
@@ -73,11 +72,27 @@ public class MChainBuilder<E> {
 	}
 	
 	
-	public List<Chain<E>> retrieveChains(){
-		if(!this.scrap.isEmpty()){
-			this.noCompletion.handle();
-		}
+	public List<Chain<E>> retrieve(){
+		validateScrap();
 		return new ArrayList<>(this.chainList);
+	}
+	
+	public Chain<E> retrieveFirst(){
+		validateScrap();
+		if(this.chainList.size() == 0){
+			return null;
+		}
+		return this.chainList.get(0);
+	}
+	
+	private void validateScrap(){
+		if(!this.isComplete()){
+			noCompletion.handle();
+		}
+	}
+	
+	public boolean isComplete(){
+		return this.scrap.isEmpty();
 	}
 	
 	public boolean remove(Chain<E> chain){
@@ -90,6 +105,20 @@ public class MChainBuilder<E> {
 	
 	public List<E> retrieveScrap(){
 		return new ArrayList<>(this.scrap);
+	}
+	
+	public void clear(){
+		this.chainList.clear();
+		this.scrap.clear();
+	}
+	
+	@Override
+	public int size() {
+		int size = 0;
+		for(Chain<E> c : this.chainList){
+			size += c.size();
+		}
+		return size;
 	}
 	
 }

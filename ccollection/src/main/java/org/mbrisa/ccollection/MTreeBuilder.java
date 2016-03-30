@@ -5,17 +5,23 @@ import java.util.LinkedList;
 import java.util.List;
 
 
-public class MTreeBuilder<E> {
+public class MTreeBuilder<E> implements CCBuilder<E> {
 	
 	private final BuildingCondition<E> condition;
 	private final List<TreeNode<E>> rootNodes = new LinkedList<>();
 	private final List<TreeNode<E>> scrap = new ArrayList<>();
+	private final NoCompleteHandler noCompletion;
 	
 	
-	public MTreeBuilder(BuildingCondition<E> condition) {
+	public MTreeBuilder(BuildingCondition<E> condition, NoCompleteHandler handler) {
 		this.condition = condition;
+		this.noCompletion = handler;
+	}
+	public MTreeBuilder(BuildingCondition<E> condition){
+		this(condition,new GruffNoCompleteHandler());
 	}
 	
+	@Override
 	public void add(E node){
 		TreeNode<E> addition = new TreeNode<>(node,this.condition);
 		
@@ -29,7 +35,9 @@ public class MTreeBuilder<E> {
 	
 	private RelinkStrategy toAdd(TreeNode<E> addition){
 		assert(addition.getParent() == null);
+		assert(addition.size() ==1);
 		for(TreeNode<E> root : rootNodes){
+			//首先将 addition 作为 root 进行添加，因为这个过程不需要对原有 root 进行迭代。
 			if(addition.add(root)){ // addition is root
 				upsertRoot(addition, root);
 				return RelinkStrategy.RELINK_EACH_OTHER;
@@ -40,7 +48,7 @@ public class MTreeBuilder<E> {
 				}
 			}
 		}
-		if(this.condition.headable(addition.entity())){
+		if(this.condition.headable(addition.entity())){//to here the addition can not link to the existing tree,so try to create a new tree
 			upsertRoot(addition, null);
 			if(this.scrap.size() > 0){
 				return RelinkStrategy.SCRAP_NOLY;
@@ -69,7 +77,8 @@ public class MTreeBuilder<E> {
 		return this.rootNodes.size();
 	}
 	
-	public int nodeSize(){
+	@Override
+	public int size(){
 		int nodeSize = 0;
 		for(TreeNode<E> root : rootNodes){
 			nodeSize += root.size();
@@ -77,7 +86,9 @@ public class MTreeBuilder<E> {
 		return nodeSize;
 	}
 
-	public List<TreeNode<E>> getRoots(){
+	@Override
+	public List<TreeNode<E>> retrieve(){
+		validateScrap();
 		ArrayList<TreeNode<E>> result = new ArrayList<>();
 		for(TreeNode<E> node : this.rootNodes){
 			result.add(node.clone());
@@ -85,35 +96,38 @@ public class MTreeBuilder<E> {
 		return result;
 	}
 	
-	public List<TreeNode<E>> retrieveRoots(){
+	public TreeNode<E> retrieveFirstRoot(){
 		validateScrap();
-		return getRoots();
-	}
-	
-	public TreeNode<E> getFirstRoot() {
 		if(this.rootNodes.size() == 0){
 			return null;
 		}
 		return this.rootNodes.get(0).clone();
 	}
 	
-	public TreeNode<E> retrieveFirstRoot(){
-		validateScrap();
-		return getFirstRoot();
+	@Override
+	public void clear(){
+		this.rootNodes.clear();
+		this.scrap.clear();
 	}
 	
 	private void validateScrap(){
-		if(this.scrap.size() > 0){
-			throw new NoCompleteException();
+		if(!this.isComplete()){
+			noCompletion.handle();
 		}
 	}
 	
-	public List<E> getScrap(){
+	@Override
+	public List<E> retrieveScrap(){
 		ArrayList<E> result = new ArrayList<>();
 		for(TreeNode<E> node : this.scrap){
 			result.add(node.entity());
 		}
 		return result;
+	}
+	
+	@Override
+	public boolean isComplete(){
+		return this.scrap.size() == 0;
 	}
 	
 	private static enum RelinkStrategy{

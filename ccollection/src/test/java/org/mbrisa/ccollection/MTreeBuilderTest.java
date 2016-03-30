@@ -11,11 +11,11 @@ public class MTreeBuilderTest {
 		MTreeBuilder<Integer> builder = new MTreeBuilder<>(TestUtil.raySerialConditionToBuild);
 		assertNull(builder.retrieveFirstRoot());
 		builder.add(1);
-		assertEquals(0,builder.nodeSize());
+		assertEquals(0,builder.size());
 		assertEquals(0,builder.treeSize());
 		scrapTest(builder, 1);
 		try{
-			builder.retrieveRoots();
+			builder.retrieve();
 			assertTrue(false);
 		}catch(NoCompleteException e){
 		}
@@ -24,8 +24,19 @@ public class MTreeBuilderTest {
 			assertTrue(false);
 		}catch(NoCompleteException e){
 		}
-		assertNull(builder.getFirstRoot());
+		cleanTest(builder);
+		
+		builder = new MTreeBuilder<>(TestUtil.raySerialConditionToBuild,new IgnoreNoCompleteHandler());
+		assertNull(builder.retrieveFirstRoot());
+		builder.add(1);
+		assertEquals(0,builder.size());
+		assertEquals(0,builder.treeSize());
+		scrapTest(builder, 1);
+		assertNull(builder.retrieveFirstRoot());
 		iteratorTest(builder);
+		
+		cleanTest(builder);
+		
 	}
 	
 	@Test
@@ -50,11 +61,13 @@ public class MTreeBuilderTest {
 		builder.add(2);
 		scrapTest(builder);
 		iteratorTest(builder, new Object[]{0,1,2,3},new Object[]{0});
+		
+		cleanTest(builder);
 	}
 	
 	@Test
 	public void rootStrict(){
-		MTreeBuilder<Integer> builder = new MTreeBuilder<>(TestUtil.raySerialConditionToBuild);
+		MTreeBuilder<Integer> builder = new MTreeBuilder<>(TestUtil.raySerialConditionToBuild,new IgnoreNoCompleteHandler());
 		
 		builder.add(1);
 		iteratorTest(builder);
@@ -65,7 +78,7 @@ public class MTreeBuilderTest {
 		iteratorTest(builder,new Object[]{0,1});
 		scrapTest(builder);
 		
-		builder = new MTreeBuilder<>(TestUtil.raySerialConditionToBuild);
+		builder = new MTreeBuilder<>(TestUtil.raySerialConditionToBuild,new IgnoreNoCompleteHandler());
 		builder.add(1);
 		builder.add(2);
 		builder.add(3);
@@ -78,13 +91,15 @@ public class MTreeBuilderTest {
 		builder.add(0);
 		iteratorTest(builder,new Object[]{0,1,2,3,2});
 		scrapTest(builder,5);
+		
+		cleanTest(builder);
 	}
 	
 	
 	private <E> void iteratorTest(MTreeBuilder<E> builder,Object[]... eachTree){
 		assertEquals(eachTree.length,builder.treeSize());
 		int rootCount = 0;
-		for(TreeNode<E> root : builder.getRoots()){
+		for(TreeNode<E> root : builder.retrieve()){
 			Object[] atree = eachTree[rootCount];
 			assertEquals(atree.length , root.size());
 			int i = 0;
@@ -99,17 +114,23 @@ public class MTreeBuilderTest {
 		for(Object[] tree : eachTree){
 			totalSize += tree.length;
 		}
-		assertEquals(totalSize,builder.nodeSize());
+		assertEquals(totalSize,builder.size());
 	}
 	
 	
 	private <E> void scrapTest(MTreeBuilder<E> builder,Object... children){
-		assertEquals(children.length,builder.getScrap().size());
+		assertEquals(children.length,builder.retrieveScrap().size());
 		int i = 0;
-		for(Object child : builder.getScrap()){
+		for(Object child : builder.retrieveScrap()){
 			assertEquals(children[i++],child);
 		}
 	}
 	
+	private void cleanTest(MTreeBuilder<?> builder){
+		builder.clear();
+		iteratorTest(builder);
+		scrapTest(builder);
+		assertNull(builder.retrieveFirstRoot());
+	}
 	
 }
