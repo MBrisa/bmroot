@@ -8,7 +8,7 @@ public class ChainBuilderTest {
 	
 	@Test
 	public void go(){
-		ChainBuilder<Integer> builder = new ChainBuilder<Integer>(TestUtil.serialConditionToBuild,new IgnoreNoCompleteHandler());
+		ChainBuilder<Integer> builder = new ChainBuilder<Integer>(TestUtil.serialCondition,new IgnoreNoCompleteHandler());
 		builder.add(0);
 		TestUtil.orderTest(builder.retrieve(), 0);
 		assertTrue(builder.isComplete());
@@ -34,8 +34,8 @@ public class ChainBuilderTest {
 	
 	@Test
 	public void go2(){
-		ChainBuilder<Integer> builder = new ChainBuilder<Integer>(TestUtil.serialConditionToBuild,new GruffNoCompleteHandler());
-		assertNull(builder.retrieve());
+		ChainBuilder<Integer> builder = new ChainBuilder<Integer>(TestUtil.serialCondition,new GruffNoCompleteHandler());
+		TestUtil.orderTest(builder.retrieve());
 		
 		builder.add(1);
 		TestUtil.orderTest(builder.retrieve(), 1);
@@ -107,7 +107,7 @@ public class ChainBuilderTest {
 	private void cleanTest(ChainBuilder<?> builder){
 		builder.clear();
 		assert(builder.isComplete());
-		assertNull(builder.retrieve());
+		TestUtil.orderTest(builder.retrieve());
 		assertEquals(0,builder.retrieveScrap().size());
 	}
 	

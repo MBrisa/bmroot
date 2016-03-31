@@ -5,37 +5,39 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-public class TreeNode<E> implements Cloneable, Iterable<E> {
+//TreeNode must hold the LinkedCondition ,because the tree must compare the condition on TreeNode
+public class TreeNode<E> implements Cloneable, Iterable<TreeNode<E>> {
 
-	private TreeNode<E> root;
+//	private TreeNode<E> root;
 	private TreeNode<E> parent; 
 	private int indexInParent = -1; // 该值是当前节点在其父节点 allNodes 中的 index 。当前节点如果没有父节点，该值为 -1 ，如果有父节点该值大于0
 	private List<DCIndex> dcis = new ArrayList<>(); // direct children index in allNodex
 	private final E e;
-	private final LinkedCondition<E> condition;
-	private LinkedList<TreeNode<E>> allNodes = new LinkedList<TreeNode<E>>(); 
+//	private final LinkedCondition<E> condition;
+	LinkedList<TreeNode<E>> allNodes = new LinkedList<TreeNode<E>>(); 
 	
-	@SuppressWarnings("unchecked")
-	public TreeNode(E e) {
-		this(e, NoLimitLinkedCondition.getInstance());
-	}
+
+//	@SuppressWarnings("unchecked")
+//	public TreeNode(E e) { 
+//		this(e, NoLimitLinkedCondition.getInstance());
+//	}
 	
-	public TreeNode(E e,LinkedCondition<E> condition) {
-		if(e == null && condition.rejectNull()){
-			throw new NullPointerException();
-		}
+	public TreeNode(E e/*,LinkedCondition<E> condition*/) {
+//		if(e == null && condition.rejectNull()){
+//			throw new NullPointerException();
+//		}
 		this.e = e;
-		this.condition = condition;
+//		this.condition = condition;
 		this.allNodes.add(this);
-		this.root = this;
+//		this.root = this;
 	}
 	
-	/**
-	 * @return the condition
-	 */
-	public LinkedCondition<E> getCondition() {
-		return condition;
-	}
+//	/**
+//	 * @return the condition
+//	 */
+//	public LinkedCondition<E> getCondition() {
+//		return condition;
+//	}
 	
 
 	public boolean add(TreeNode<E> child){
@@ -44,18 +46,18 @@ public class TreeNode<E> implements Cloneable, Iterable<E> {
 	}
 	
 	public boolean add(E child){
-		return addToChild(new TreeNode<E>(child, this.condition));
+		return addToChild(new TreeNode<E>(child/*, this.condition*/));
 	}
 	
 	private boolean addToChild(TreeNode<E> child){
-		if(!this.condition.appendable(this.entity(), child.entity())){
-			return false;
-		}
+//		if(!this.condition.appendable(this.entity(), child.entity())){
+//			return false;
+//		}
 		child.setParent(this);
-		child.setRoot(this.getRoot());
-		for(TreeNode<E> cc : child.retrieveAllNode()){
-			cc.setRoot(this.getRoot());
-		}
+//		child.setRoot(this.getRoot());
+//		for(TreeNode<E> cc : child.retrieveAllNode()){
+//			cc.setRoot(this.getRoot());
+//		}
 		
 		int index = this.size(); //child 在 allNodes 列表中的下标
 		this.dcis.add(new DCIndex(index)); //记录 child 为当前 node 的直接子节点，并记录其在 allNodes 列表中的下标
@@ -70,8 +72,8 @@ public class TreeNode<E> implements Cloneable, Iterable<E> {
 	private void validateTreeNode(TreeNode<E> target){
 		if(target== null )
 			throw new NullPointerException();
-		if(!this.condition.equals(target.condition))
-			throw new NoCompatibilityException("LinkCondition is not equals");
+//		if(!this.condition.equals(target.condition))
+//			throw new NoCompatibilityException("LinkCondition is not equals");
 		if(target.getParent() != null)
 			throw new NodeConflictException("target: ["+ target +"] exists parent already.");
 		if(this.allNodes.contains(target) || target.allNodes.contains(this)) ////不需要对 child 进行检查，因为通过上面的 if(target.getParent() != null) 的检查保证了一个节点最多只能有一个父
@@ -136,9 +138,9 @@ public class TreeNode<E> implements Cloneable, Iterable<E> {
 		return parent;
 	}
 	
-	public TreeNode<E> getRoot() {
-		return this.root;
-	}
+//	public TreeNode<E> getRoot() {
+//		return this.root;
+//	}
 	
 	List<TreeNode<E>> retrieveAllNode(){
 		return new ArrayList<>(this.allNodes);
@@ -148,9 +150,9 @@ public class TreeNode<E> implements Cloneable, Iterable<E> {
 		this.parent = parent;
 	}
 	
-	private void setRoot(TreeNode<E> root){
-		this.root = root;
-	}
+//	private void setRoot(TreeNode<E> root){
+//		this.root = root;
+//	}
 	
 	@Override
 	public boolean equals(Object obj) {
@@ -171,16 +173,16 @@ public class TreeNode<E> implements Cloneable, Iterable<E> {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder("indexInParent :["+indexInParent+"] current: ["+this.e+"]  element [");
-		for(E node : this){
-			builder.append(node);
+		for(TreeNode<E> node : this){
+			builder.append(node.entity());
 			builder.append(",");
 		}
 		return builder.append("]").toString();
 	}
 	
 	@Override
-	public Iterator<E> iterator() {
-		return this.new EIterator();
+	public Iterator<TreeNode<E>> iterator() {
+		return this.allNodes.iterator();
 	}
 	
 	
@@ -211,7 +213,7 @@ public class TreeNode<E> implements Cloneable, Iterable<E> {
 		cloned.dcis = new ArrayList<>();
 		cloned.indexInParent = -1;
 		cloned.setParent(null);
-		cloned.setRoot(cloned);
+//		cloned.setRoot(cloned);
 		cloned.allNodes.add(cloned);
 		for(TreeNode<E> child : this.children()){
 			TreeNode<E> childClone = child.cloneNode();
@@ -220,25 +222,7 @@ public class TreeNode<E> implements Cloneable, Iterable<E> {
 		return cloned;
 	}
 	
-	private class EIterator implements Iterator<E>{
-		private Iterator<TreeNode<E>> iterator = TreeNode.this.allNodes.iterator();
-		@Override
-		public boolean hasNext() {
-			return iterator.hasNext();
-		}
-		@Override
-		public E next() {
-			return iterator.next().entity();
-		}
-		
-		@Override
-		public void remove() {
-			throw new UnsupportedOperationException();
-		}
-	}
 	
-	
-
 	private static class DCIndex{
 		private int index;
 		public DCIndex(int index) {

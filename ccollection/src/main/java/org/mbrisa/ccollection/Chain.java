@@ -38,10 +38,18 @@ public class Chain<E> implements Collection<E>,Cloneable{
 	@Override
 	public boolean add(E e) {
 		if(this.getContainer().isEmpty()){
+			return tyAddToEmpty(e);
+		}
+		return addToHead(e) || addToTail(e);
+	}
+	
+	private boolean tyAddToEmpty(E e){
+		assert(this.getContainer().size() == 0);
+		if(chainCondition.headable(e)){
 			this.getContainer().add(e);
 			return true;
 		}
-		return addToHead(e) || addToTail(e);
+		return false;
 	}
 	
 	boolean addToHead(E e){

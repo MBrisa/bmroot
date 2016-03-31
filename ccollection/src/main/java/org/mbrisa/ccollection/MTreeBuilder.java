@@ -7,17 +7,17 @@ import java.util.List;
 
 public class MTreeBuilder<E> implements CCBuilder<E> {
 	
-	private final BuildingCondition<E> condition;
+	private final LinkedCondition<E> condition;
 	private final List<TreeNode<E>> rootNodes = new LinkedList<>();
 	private final List<TreeNode<E>> scrap = new ArrayList<>();
 	private final NoCompleteHandler noCompletion;
 	
 	
-	public MTreeBuilder(BuildingCondition<E> condition, NoCompleteHandler handler) {
+	public MTreeBuilder(LinkedCondition<E> condition, NoCompleteHandler handler) {
 		this.condition = condition;
 		this.noCompletion = handler;
 	}
-	public MTreeBuilder(BuildingCondition<E> condition){
+	public MTreeBuilder(LinkedCondition<E> condition){
 		this(condition,new GruffNoCompleteHandler());
 	}
 	

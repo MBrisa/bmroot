@@ -9,7 +9,7 @@ public class MChainBuilderTest{
 	
 	@Test
 	public void simpleTest(){
-		MChainBuilder<Integer> builder = new MChainBuilder<Integer>(TestUtil.serialConditionToBuild);
+		MChainBuilder<Integer> builder = new MChainBuilder<Integer>(TestUtil.serialCondition);
 		
 		builder.add(0);
 		assertEquals(1,builder.chainCount());

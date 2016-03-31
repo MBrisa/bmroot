@@ -7,16 +7,16 @@ import java.util.List;
 public class MChainBuilder<E> implements CCBuilder<E> {
 	
 	private final LinkedList<Chain<E>> chainList = new LinkedList<>();
-	private final BuildingCondition<E> chainCondition;
+	private final LinkedCondition<E> chainCondition;
 	private final NoCompleteHandler noCompletion;
 	private final LinkedList<E> scrap = new LinkedList<>();
 	
-	public MChainBuilder(BuildingCondition<E> chainCondition,NoCompleteHandler handler) {
+	public MChainBuilder(LinkedCondition<E> chainCondition,NoCompleteHandler handler) {
 		this.chainCondition = chainCondition;
 		this.noCompletion = handler;
 	}
 	
-	public MChainBuilder(BuildingCondition<E> chainCondition) {
+	public MChainBuilder(LinkedCondition<E> chainCondition) {
 		this(chainCondition, new GruffNoCompleteHandler());
 	}
 	

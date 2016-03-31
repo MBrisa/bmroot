@@ -3,12 +3,12 @@ package org.mbrisa.ccollection;
 import static org.junit.Assert.assertEquals;
 
 import org.mbrisa.ccollection.Chain;
-import org.mbrisa.ccollection.BuildingCondition;
+//import org.mbrisa.ccollection.BuildingCondition;
 
 public class TestUtil {
 	
 	public static SerialCondition serialCondition = new SerialCondition();
-	public static SerialConditionToBuild serialConditionToBuild = new SerialConditionToBuild();
+//	public static SerialConditionToBuild serialConditionToBuild = new SerialConditionToBuild();
 	public static RaySerialConditionToBuild raySerialConditionToBuild = new RaySerialConditionToBuild();
 	public static ParentChildCondition parentChildCondition = new ParentChildCondition();
 	public static RayParentChildCondition rayParentChildCondition = new RayParentChildCondition();
@@ -45,16 +45,18 @@ public class TestUtil {
 			return false;
 		}
 		
-	}
-	
-	public static class SerialConditionToBuild extends SerialCondition implements BuildingCondition<Integer>{
 		@Override
 		public boolean headable(Integer addition) {
 			return true;
 		}
+		
 	}
 	
-	public static class RaySerialConditionToBuild extends SerialCondition implements BuildingCondition<Integer>{
+//	public static class SerialConditionToBuild extends SerialCondition implements BuildingCondition<Integer>{
+//		
+//	}
+	
+	public static class RaySerialConditionToBuild extends SerialCondition /*implements BuildingCondition<Integer>*/{
 		
 		@Override
 		public boolean appendable(Integer target, Integer addition) {
@@ -91,16 +93,21 @@ public class TestUtil {
 		public boolean rejectNull() {
 			return true;
 		}
-	}
-	
-	public static class ParentChildConditionToBuild extends ParentChildCondition implements BuildingCondition<Node>{
+		
 		@Override
 		public boolean headable(Node addition) {
 			return true;
 		}
 	}
 	
-	public static class RayParentChildCondition extends ParentChildCondition implements BuildingCondition<Node>{
+//	public static class ParentChildConditionToBuild extends ParentChildCondition implements BuildingCondition<Node>{
+//		@Override
+//		public boolean headable(Node addition) {
+//			return true;
+//		}
+//	}
+	
+	public static class RayParentChildCondition extends ParentChildCondition/* implements BuildingCondition<Node>*/{
 		@Override
 		public boolean headable(Node addition) {
 			return addition.getParentId() == null;

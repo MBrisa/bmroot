@@ -51,6 +51,11 @@ public class TreeNodeTest {
 			public boolean rejectNull() {
 				return true;
 			}
+			
+			@Override
+			public boolean headable(Integer addition) {
+				return false;
+			}
 		};
 		
 		try{

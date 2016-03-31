@@ -9,26 +9,22 @@ public class ChainBuilder<E> implements CCBuilder<E> {
 	private Chain<E> chain ;
 	private final LinkedList<E> scrap = new LinkedList<>();
 	private final NoCompleteHandler noCompletion;
-	private final BuildingCondition<E> condition;
+	private final LinkedCondition<E> condition;
 
-	public ChainBuilder(BuildingCondition<E> condition, NoCompleteHandler handler) {
+	public ChainBuilder(LinkedCondition<E> condition, NoCompleteHandler handler) {
 		this.condition = condition;
+		this.chain = new Chain<>(condition);
 		this.noCompletion = handler;
 	}
 	
-	public ChainBuilder(BuildingCondition<E> condition){
+	public ChainBuilder(LinkedCondition<E> condition){
 		this(condition,new GruffNoCompleteHandler());
 	}
 	
 	@Override
 	public void add(E e){
-		if(chain == null && this.condition.headable(e)){
-			chain = new Chain<>(e,this.condition);
-			this.relinkFromScrap();
-			return;
-		}
-		if(chain != null && this.chain.add(e)){
-			this.relinkFromScrap();
+		if(this.chain.add(e)){
+			relinkFromScrap();
 			return;
 		}
 		this.scrap.add(e);
@@ -48,7 +44,7 @@ public class ChainBuilder<E> implements CCBuilder<E> {
 	
 	@Override
 	public int size() {
-		return this.chain == null ? 0 : this.chain.size();
+		return this.chain.size();
 	}
 	
 	@Override
@@ -71,7 +67,7 @@ public class ChainBuilder<E> implements CCBuilder<E> {
 	
 	@Override
 	public void clear(){
-		this.chain = null;
+		this.chain = new Chain<>(this.condition);
 		this.scrap.clear();
 	}
 	

@@ -8,15 +8,15 @@ public class TreeBuilder<E> implements CCBuilder<E> {
 
 	private TreeNode<E> root;
 	private final ArrayList<TreeNode<E>> scrap = new ArrayList<>();
-	private final BuildingCondition<E> condition;
+	private final LinkedCondition<E> condition;
 	private final NoCompleteHandler noCompletion;
 	
-	public TreeBuilder(BuildingCondition<E> condition, NoCompleteHandler handler) {
+	public TreeBuilder(LinkedCondition<E> condition, NoCompleteHandler handler) {
 		this.condition = condition;
 		this.noCompletion = handler;
 	}
 	
-	public TreeBuilder(BuildingCondition<E> condition) {
+	public TreeBuilder(LinkedCondition<E> condition) {
 		this(condition, new GruffNoCompleteHandler());
 	}
 	

@@ -21,4 +21,9 @@ class NoLimitLinkedCondition implements LinkedCondition {
 	public boolean rejectNull() {
 		return false;
 	}
+	
+	@Override
+	public boolean headable(Object addition) {
+		return true;
+	}
 }
