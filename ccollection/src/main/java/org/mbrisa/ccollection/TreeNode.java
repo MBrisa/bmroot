@@ -5,7 +5,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-//TreeNode must hold the LinkedCondition ,because the tree must compare the condition on TreeNode
 public class TreeNode<E> implements Cloneable, Iterable<TreeNode<E>> {
 
 //	private TreeNode<E> root;
@@ -41,12 +40,24 @@ public class TreeNode<E> implements Cloneable, Iterable<TreeNode<E>> {
 	
 
 	public boolean add(TreeNode<E> child){
-		validateTreeNode(child);
+		if(child== null )
+			throw new NullPointerException();
+		if(child == this)
+			throw new NodeConflictException("can not add self.");
+//		if(!this.condition.equals(target.condition))
+//			throw new NoCompatibilityException("LinkCondition is not equals");
+		if(child.getParent() != null) 
+			return false;
+//			throw new NodeConflictException("target: ["+ child +"] exists parent already.");
+//		if(this.allNodes.contains(target) || target.allNodes.contains(this)) //不需做次检查，如果 target 不存在 parent 其一定不会再当前的 allNodes 列表中
+//			throw new NodeConflictException("target: ["+ target +"] is current node, or relation was create already");
 		return addToChild(child);
 	}
 	
-	public boolean add(E child){
-		return addToChild(new TreeNode<E>(child/*, this.condition*/));
+	public TreeNode<E> add(E child){
+		TreeNode<E> node = new TreeNode<E>(child/*, this.condition*/);
+		addToChild(node);
+		return node;
 	}
 	
 	private boolean addToChild(TreeNode<E> child){
@@ -68,17 +79,6 @@ public class TreeNode<E> implements Cloneable, Iterable<TreeNode<E>> {
 		return true;
 	}
 	
-	
-	private void validateTreeNode(TreeNode<E> target){
-		if(target== null )
-			throw new NullPointerException();
-//		if(!this.condition.equals(target.condition))
-//			throw new NoCompatibilityException("LinkCondition is not equals");
-		if(target.getParent() != null)
-			throw new NodeConflictException("target: ["+ target +"] exists parent already.");
-		if(this.allNodes.contains(target) || target.allNodes.contains(this)) ////不需要对 child 进行检查，因为通过上面的 if(target.getParent() != null) 的检查保证了一个节点最多只能有一个父
-			throw new NodeConflictException("target: ["+ target +"] is current node, or relation was create already");
-	}
 	
 	private void updateAdditionInfoInParent(int addedIndexInChild,int addedSize){
 		if(this.getParent() == null)
@@ -138,9 +138,9 @@ public class TreeNode<E> implements Cloneable, Iterable<TreeNode<E>> {
 		return parent;
 	}
 	
-//	public TreeNode<E> getRoot() {
-//		return this.root;
-//	}
+	public boolean isRoot() {
+		return this.getParent() == null;
+	}
 	
 	List<TreeNode<E>> retrieveAllNode(){
 		return new ArrayList<>(this.allNodes);
@@ -172,7 +172,7 @@ public class TreeNode<E> implements Cloneable, Iterable<TreeNode<E>> {
 	 */
 	@Override
 	public String toString() {
-		StringBuilder builder = new StringBuilder("indexInParent :["+indexInParent+"] current: ["+this.e+"]  element [");
+		StringBuilder builder = new StringBuilder("indexInParent :["+indexInParent+"] current: ["+this.e+"]  children [");
 		for(TreeNode<E> node : this){
 			builder.append(node.entity());
 			builder.append(",");

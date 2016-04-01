@@ -96,7 +96,7 @@ public class TestUtil {
 		
 		@Override
 		public boolean headable(Node addition) {
-			return true;
+			return addition.parentId == null;
 		}
 	}
 	
@@ -129,6 +129,28 @@ public class TestUtil {
 		
 		public int getId(){
 			return this.id;
+		}
+	}
+	
+	/**
+	 * direct children test
+	 */
+	public static void dcTest(TreeNode<?> parent,TreeNode<?>... children){
+		assertEquals(children.length,parent.children().size());
+		int i = 0;
+		for(TreeNode<?> child : parent.children()){
+			assertEquals(children[i++],child);
+		}
+	}
+	
+	/**
+	 * direct children test
+	 */
+	public static void dcTest(TreeNode<?> parent,Object... children){
+		assertEquals(children.length,parent.children().size());
+		int i = 0;
+		for(TreeNode<?> child : parent.children()){
+			assertEquals(children[i++],child.entity());
 		}
 	}
 

@@ -11,7 +11,7 @@ public class TreeBuilderTest {
 	public void exceptionTest(){
 		TreeBuilder<Integer> builder = new TreeBuilder<Integer>(TestUtil.raySerialConditionToBuild); 
 		iteratorTest(builder);
-		assertNull(builder.retrieve());
+		assertEquals(0,builder.retrieve().size());
 		scrapTest(builder);
 		
 		builder.add(1);
@@ -27,7 +27,7 @@ public class TreeBuilderTest {
 		
 		builder = new TreeBuilder<Integer>(TestUtil.raySerialConditionToBuild,new IgnoreNoCompleteHandler()); 
 		builder.clear(); 
-		assertNull(builder.retrieve());
+		assertEquals(0,builder.retrieve().size());
 		scrapTest(builder);
 		
 		builder.add(0);
@@ -48,7 +48,7 @@ public class TreeBuilderTest {
 		
 		cleanTest(builder);
 		
-		BuildingCondition<Integer> noLimitCondition = new BuildingCondition<Integer>() {
+		LinkedCondition<Integer> noLimitCondition = new LinkedCondition<Integer>() {
 			@Override
 			public boolean rejectNull() {
 				return false;
@@ -110,10 +110,10 @@ public class TreeBuilderTest {
 	
 	private <E> void iteratorTest(TreeBuilder<E> builder,Object... eachNode){
 		assertEquals(eachNode.length,builder.size());
-		TreeNode<E> root =  builder.retrieve();
-		if(root != null){
+		CTree<E> cTree =  builder.retrieve();
+		if(cTree != null){
 			int i = 0;
-			for(E e : root){
+			for(E e : cTree){
 				assertEquals(eachNode[i++] , e);
 			}
 		}

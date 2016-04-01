@@ -6,7 +6,8 @@ import java.util.NoSuchElementException;
 
 public class CTree<E> implements Collection<E> {
 	
-	private TreeNode<E> root;
+	private TreeNode<E> root; //在对外返回任何一个 TreeNode 时，应该返回 TreeNode 的 clone,以保证 TreeNode 不会被外部修改。
+	private TreeNode<E> lastAddition;
 	private final LinkedCondition<E> condition;
 	
 	public CTree(LinkedCondition<E> condition) {
@@ -14,6 +15,10 @@ public class CTree<E> implements Collection<E> {
 			throw new NullPointerException();
 		}
 		this.condition = condition;
+	}
+	
+	public TreeNode<E> getRoot() {
+		return this.root.clone();
 	}
 
 	/* (non-Javadoc)
@@ -31,21 +36,58 @@ public class CTree<E> implements Collection<E> {
 		if(this.root == null){
 			if(this.condition.headable(e)){
 				this.root = addition;
+				this.setLastAddition(addition);
 				return true;
 			}
 			return false;
 		}
-		//首先将 addition 作为 root 进行添加，因为这个过程不需要对原有 root 进行迭代。
+		//首先尝试将 addition 作为 root 进行添加，因为这个过程不需要对原有 root 进行迭代。
 		if(this.condition.headable(addition.entity()) && this.condition.appendable(addition.entity(), this.root.entity()) && addition.add(this.root)){ // first try to become a root
 			this.root = addition;
+			this.setLastAddition(addition);
 			return true;
 		}
+		if(this.addToChild(addition)){
+			this.setLastAddition(addition);
+			return true;
+		}
+		return false;
+	}
+	
+	public boolean add(CTree<E> target){
+		if(!this.condition.equals(target.condition)){
+			throw new NoCompatibilityException("current condition:"+this.condition+" is not compatible with "+target.condition+" of param chain");
+		}
+		TreeNode<E> tr = target.root;
+		if(tr == null){
+			return false;
+		}
+		if(this.root == null){
+			this.root = target.root;
+			return true;
+		}
+		return this.addToChild(tr);
+	}
+	
+	private boolean addToChild(TreeNode<E> addition){
+		assert(addition.getParent() == null);
 		for(TreeNode<E> node : this.root.retrieveAllNode()){
 			if(this.condition.appendable(node.entity(), addition.entity())){ // addition is child
-				return node.add(addition);
+				return node.add(addition); //must be true //NOTE: 与 chain 不同 addition “整体”添加到了一个指定位置。
 			}
 		}
 		return false;
+	}
+	
+	/**
+	 * @return 最后一次由 {@link #add(E)} 方法成功添加的 TreeNode
+	 */
+	TreeNode<E> getLastAddition() {
+		return lastAddition;
+	}
+
+	private void setLastAddition(TreeNode<E> lastAddition) {
+		this.lastAddition = lastAddition;
 	}
 	
 	/* (non-Javadoc)
@@ -218,5 +260,6 @@ public class CTree<E> implements Collection<E> {
 			throw new UnsupportedOperationException();
 		}
 	}
+
 	
 }

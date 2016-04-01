@@ -2,17 +2,17 @@ package org.mbrisa.ccollection;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedList;
 
 
 public class TreeBuilder<E> implements CCBuilder<E> {
 
-	private TreeNode<E> root;
-	private final ArrayList<TreeNode<E>> scrap = new ArrayList<>();
-	private final LinkedCondition<E> condition;
+	private CTree<E> cTree;
+	private final LinkedList<E> scrap = new LinkedList<>();
 	private final NoCompleteHandler noCompletion;
 	
 	public TreeBuilder(LinkedCondition<E> condition, NoCompleteHandler handler) {
-		this.condition = condition;
+		this.cTree = new CTree<>(condition);
 		this.noCompletion = handler;
 	}
 	
@@ -22,50 +22,22 @@ public class TreeBuilder<E> implements CCBuilder<E> {
 	
 	@Override
 	public void add(E e){
-		TreeNode<E> addition = new TreeNode<>(e, this.condition);
-		if(toAdd(addition)){
-			relinkFormScrap();
+		if(cTree.add(e)){
+			relinkFromScrap();
 			return;
 		}
-		this.scrap.add(addition);
-	}
-	
-	private boolean toAdd(TreeNode<E> addition){ 
-		assert(addition.getParent() == null);
-		assert(addition.size() == 1);
-		if(this.root == null){
-			if(this.condition.headable(addition.entity())){
-				this.root = addition;
-				return true;
-			}
-			return false;
-		}
-		//首先将 addition 作为 root 进行添加，因为这个过程不需要对原有 root 进行迭代。
-		if(this.condition.headable(addition.entity()) && addition.add(this.root)){ // first try to become a root
-			this.root = addition;
-			return true;
-		}
-		for(TreeNode<E> node : this.root.retrieveAllNode()){
-			if(node.add(addition)){ // addition is child
-				return true;
-			}
-		}
-		return false;
+		this.scrap.add(e);
 	}
 	
 	@Override
-	public TreeNode<E> retrieve(){
+	public CTree<E> retrieve(){
 		validateScrap();
-		return this.root;
+		return this.cTree;
 	}
 	
 	@Override
 	public Collection<E> retrieveScrap(){
-		ArrayList<E> result = new ArrayList<>();
-		for(TreeNode<E> st : this.scrap){
-			result.add(st.entity());
-		}
-		return result;
+		return new ArrayList<>(this.scrap);
 	}
 	
 	private void validateScrap(){
@@ -76,17 +48,19 @@ public class TreeBuilder<E> implements CCBuilder<E> {
 
 	@Override
 	public int size() {
-		return this.root == null ? 0 : this.root.size();
+		return this.cTree.size();
 	}
 	
-	private void relinkFormScrap(){
-		for(TreeNode<E> node : this.scrap){
-			if(this.toAdd(node)){
-				this.scrap.remove(node);
-				relinkFormScrap();
+	
+	private void relinkFromScrap(){
+		for(E e : this.scrap){
+			if(this.cTree.add(e)){
+				this.scrap.remove(e);
+				relinkFromScrap();
 				return;
 			}
 		}
+		return;
 	}
 	
 	@Override
@@ -96,7 +70,7 @@ public class TreeBuilder<E> implements CCBuilder<E> {
 	
 	@Override
 	public void clear(){
-		this.root = null;
+		this.cTree.clear();
 		this.scrap.clear();
 	}
 }

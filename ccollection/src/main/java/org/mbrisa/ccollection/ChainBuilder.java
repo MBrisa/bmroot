@@ -9,10 +9,8 @@ public class ChainBuilder<E> implements CCBuilder<E> {
 	private Chain<E> chain ;
 	private final LinkedList<E> scrap = new LinkedList<>();
 	private final NoCompleteHandler noCompletion;
-	private final LinkedCondition<E> condition;
 
 	public ChainBuilder(LinkedCondition<E> condition, NoCompleteHandler handler) {
-		this.condition = condition;
 		this.chain = new Chain<>(condition);
 		this.noCompletion = handler;
 	}
@@ -67,7 +65,7 @@ public class ChainBuilder<E> implements CCBuilder<E> {
 	
 	@Override
 	public void clear(){
-		this.chain = new Chain<>(this.condition);
+		this.chain.clear();
 		this.scrap.clear();
 	}
 	

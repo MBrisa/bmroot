@@ -7,7 +7,7 @@ import java.util.LinkedList;
 public class Chain<E> implements Collection<E>,Cloneable{
 
 	private LinkedList<E> container = new LinkedList<>();
-	private final LinkedCondition<E> chainCondition ;
+	private final LinkedCondition<E> condition ;
 
 	@SuppressWarnings("unchecked")
 	public Chain() {
@@ -15,11 +15,14 @@ public class Chain<E> implements Collection<E>,Cloneable{
 	}
 	
 	public Chain(LinkedCondition<E> chainCondition) {
-		this.chainCondition = chainCondition;
+		this.condition = chainCondition;
 	}
 	
 	public Chain(E e,LinkedCondition<E> chainCondition) throws NotToHeaderException {
-		this.chainCondition = chainCondition;
+		this.condition = chainCondition;
+		if(!this.condition.headable(e)){
+			throw new NotToHeaderException();
+		}
 		this.getContainer().add(e);
 	}
 	
@@ -27,7 +30,7 @@ public class Chain<E> implements Collection<E>,Cloneable{
 	 * @return the chainCondition
 	 */
 	public LinkedCondition<E> getChainCondition() {
-		return chainCondition;
+		return condition;
 	}
 	
 	/**
@@ -45,7 +48,7 @@ public class Chain<E> implements Collection<E>,Cloneable{
 	
 	private boolean tyAddToEmpty(E e){
 		assert(this.getContainer().size() == 0);
-		if(chainCondition.headable(e)){
+		if(condition.headable(e)){
 			this.getContainer().add(e);
 			return true;
 		}
@@ -54,7 +57,7 @@ public class Chain<E> implements Collection<E>,Cloneable{
 	
 	boolean addToHead(E e){
 		E header = this.getContainer().getFirst();
-		if(chainCondition.appendable(e, header)){
+		if(condition.appendable(e, header)){
 			this.getContainer().addFirst(e);
 			return true;
 		}
@@ -63,25 +66,25 @@ public class Chain<E> implements Collection<E>,Cloneable{
 	
 	boolean addToTail(E e){
 		E tail = this.getContainer().getLast();
-		if(chainCondition.appendable(tail,e)){
+		if(condition.appendable(tail,e)){
 			this.getContainer().addLast(e);
 			return true;
 		}
 		return false;
 	}
 	
-	public boolean add(Chain<E> subChain){
-		if(!this.chainCondition.equals(subChain.chainCondition)){
-			throw new NoCompatibilityException("current ChainCondition:"+this.chainCondition+" is not compatible with "+subChain.chainCondition+" of param chain");
+	public boolean add(Chain<E> target){
+		if(!this.condition.equals(target.condition)){
+			throw new NoCompatibilityException("current condition:"+this.condition+" is not compatible with "+target.condition+" of param chain");
 		}
-		if(subChain == this){
+		if(target == this){
 			throw new NodeConflictException("can not add self.");
 		}
-		if(subChain.size() == 0){
+		if(target.size() == 0){
 			return false;
 		}
-		Chain<E> cloned = this.clone();
-		for(E e : subChain){
+		Chain<E> cloned = this.clone(); // NOTE: 子链并不是整体追加到当前链表的尾部。
+		for(E e : target){
 			if(!cloned.add(e)){
 				return false;
 			}
@@ -173,7 +176,7 @@ public class Chain<E> implements Collection<E>,Cloneable{
 		int result = 1;
 		result = prime * result + ((this.getContainer() == null) ? 0 : this.getContainer().hashCode());
 		result = prime * result
-				+ ((chainCondition == null) ? 0 : chainCondition.hashCode());
+				+ ((condition == null) ? 0 : condition.hashCode());
 		return result;
 	}
 
@@ -199,11 +202,11 @@ public class Chain<E> implements Collection<E>,Cloneable{
 		}
 		
 		try{
-			if (chainCondition == null) {
-				if (other.chainCondition != null){
+			if (condition == null) {
+				if (other.condition != null){
 					return false;
 				}
-			} else if (!chainCondition.equals(other.chainCondition)){
+			} else if (!condition.equals(other.condition)){
 				return false;
 			}
 		}catch(ClassCastException e){

@@ -25,7 +25,7 @@ public class ChainTest{
 		}
 		assertFalse(chain.add(new Chain<Integer>())); //add empty
 		Chain<Integer> chain2 = new Chain<Integer>(TestUtil.serialCondition);
-		chain.add(2);
+		assertTrue(chain.add(2));
 		try{
 			chain.add(chain2);// condition is not same
 			assertTrue(false);
@@ -40,9 +40,36 @@ public class ChainTest{
 		Chain<Node> nChain = new Chain<>();
 		Node root = new Node(null, 0);
 		assertTrue(nChain.add(root));
-		assertTrue(nChain.add(root)); // add the same ob
+		assertTrue(nChain.add(root)); // add the same ob in NoLimitLinkedCondition
 		TestUtil.orderTest(nChain, root,root);
 		
+		Chain<Node> nodeChain = new Chain<Node>(TestUtil.parentChildCondition);
+		try{
+			nodeChain.add((Node)null); // reject null
+			assertTrue(false);
+		}catch(NullPointerException e){
+		}
+		
+		assertFalse(nodeChain.add(new Node(0,1))); //root node require the parentId to null 
+		
+		Node rootNode = new Node(null,1);
+		assertTrue(nodeChain.add(rootNode));
+		TestUtil.orderTest(nodeChain,rootNode);
+		
+		Node level1 = new Node(1,2);
+		Node level1_no = new Node(1,2);
+		
+		assertTrue(nodeChain.add(level1));
+		TestUtil.orderTest(nodeChain,rootNode,level1);
+		
+		assertFalse(nodeChain.add(level1_no)); //can not meet the condition
+		TestUtil.orderTest(nodeChain,rootNode,level1);
+		
+		@SuppressWarnings("unchecked")
+		Chain<Node> nodeChain2 = new Chain<>(NoLimitLinkedCondition.getInstance());
+		Node node = new Node(1,1);
+		assertTrue(nodeChain2.add(node));
+		assertTrue(nodeChain2.add(node)); // no condition ,so the behavior like as the list
 	}
 	
 	@Test
@@ -76,37 +103,32 @@ public class ChainTest{
 		
 		Chain<Node> chain = new Chain<Node>(TestUtil.parentChildCondition);
 		
-		assertTrue(chain.add(level1));
-		TestUtil.orderTest(chain, level1);
+		assertFalse(chain.add(level1));
+		TestUtil.orderTest(chain);
 		
-		assertTrue(chain.add(level2));
-		TestUtil.orderTest(chain, level1,level2);
+		assertFalse(chain.add(level2));
+		TestUtil.orderTest(chain);
 		
 		assertFalse(chain.add(level2_no));
-		TestUtil.orderTest(chain, level1,level2);
+		TestUtil.orderTest(chain);
 		
-		assertTrue(chain.add(level3));
-		TestUtil.orderTest(chain, level1,level2,level3);
+		assertFalse(chain.add(level3));
+		TestUtil.orderTest(chain);
 		
 		assertTrue(chain.add(root));
-		TestUtil.orderTest(chain, root,level1,level2,level3);
-	}
-	
-	@Test
-	public void conditionTest2(){
-		Node root = new Node(null, 0);
-		Node level1 = new Node(0, 1);
-		
-		Chain<Node> chain = new Chain<Node>(TestUtil.parentChildCondition);
+		TestUtil.orderTest(chain, root);
 		
 		assertTrue(chain.add(level1));
-		assertEquals(1,chain.size());
-		
-		assertTrue(chain.add(root));
 		TestUtil.orderTest(chain, root,level1);
 		
-		assertFalse(chain.add(level1));
-		TestUtil.orderTest(chain, root,level1);
+		assertTrue(chain.add(level2));
+		TestUtil.orderTest(chain, root,level1,level2);
+		
+		assertFalse(chain.add(level2_no));
+		TestUtil.orderTest(chain, root,level1,level2);
+		
+		assertTrue(chain.add(level3));
+		TestUtil.orderTest(chain, root,level1,level2,level3);
 		
 	}
 	
@@ -191,10 +213,10 @@ public class ChainTest{
 		Node level4 = new Node(3, 4);
 		
 		Chain<Node> chain = new Chain<Node>(TestUtil.parentChildCondition);
+		chain.add(root);
 		chain.add(level1);
 		chain.add(level2);
 		chain.add(level3);
-		chain.add(root);
 		
 		assertTrue(chain.contains(root));
 		assertTrue(chain.contains(level1));

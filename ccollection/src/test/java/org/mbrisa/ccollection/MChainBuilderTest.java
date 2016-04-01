@@ -8,6 +8,34 @@ import org.mbrisa.ccollection.MChainBuilder;
 public class MChainBuilderTest{
 	
 	@Test
+	public void fromPro(){
+		LinkedCondition<Integer> condition = new LinkedCondition<Integer>() {
+			@Override
+			public boolean rejectNull() {
+				return false;
+			}
+			@Override
+			public boolean headable(Integer addition) {
+				return addition != null && addition < 5;
+			}
+			@Override
+			public boolean appendable(Integer target, Integer addition) {
+				return target != null && addition != null && target - addition == -1;
+			}
+		};
+		MChainBuilder<Integer> builder = new MChainBuilder<Integer>(condition);
+		builder.add(0);
+		builder.add(2);
+		assertEquals(2,builder.chainCount());
+		assertTrue(builder.isComplete());
+		builder.add(5);
+		assertEquals(2,builder.chainCount());
+		assertFalse(builder.isComplete());
+		builder.add(1);
+		assertEquals(1,builder.chainCount());
+	}
+	
+	@Test
 	public void simpleTest(){
 		MChainBuilder<Integer> builder = new MChainBuilder<Integer>(TestUtil.serialCondition);
 		

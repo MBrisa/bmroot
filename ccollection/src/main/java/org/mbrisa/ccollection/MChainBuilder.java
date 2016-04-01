@@ -23,18 +23,19 @@ public class MChainBuilder<E> implements CCBuilder<E> {
 	public void add(E node) {
 		for(Chain<E> chain : this.chainList){
 			if(chain.add(node)){
-				reLink();
+				this.reLink();
 				return;
 			}
 		}
-		if(chainCondition.headable(node)){
-			this.chainList.add(new Chain<E>(node,chainCondition));
-			if(!scrap.isEmpty()){ // all chain can not link the new node.so if scrap is empty ,no need relink on old chain
+		Chain<E> nChain = new Chain<E>(chainCondition);
+		if(nChain.add(node)){
+			this.chainList.add(nChain);
+			if(!this.scrap.isEmpty()){ // all chain can not link the new node.so if scrap is empty ,no need relink on old chain
 				reLink();
 			}
-		}else{
-			scrap.add(node);
+			return;
 		}
+		this.scrap.add(node);
 	}
 	
 	private void reLink() {
@@ -48,7 +49,9 @@ public class MChainBuilder<E> implements CCBuilder<E> {
 					}
 				}
 			}
-		}else if(this.chainList.size() > 1){
+		}
+		
+		if(this.chainList.size() > 1){
 			for(int i = 0;i < this.chainList.size(); i++){
 				Chain<E> chainI = this.chainList.get(i);
 				

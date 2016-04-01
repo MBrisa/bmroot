@@ -1,7 +1,7 @@
 package org.mbrisa.ccollection;
 
 @SuppressWarnings("rawtypes")
-class NoLimitLinkedCondition implements LinkedCondition {
+public class NoLimitLinkedCondition implements LinkedCondition {
 	private static final NoLimitLinkedCondition INSTANCE = new NoLimitLinkedCondition();
 
 	private NoLimitLinkedCondition() {

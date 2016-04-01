@@ -9,7 +9,7 @@ public class MTreeBuilderTest {
 	@Test
 	public void exceptionTest(){
 		MTreeBuilder<Integer> builder = new MTreeBuilder<>(TestUtil.raySerialConditionToBuild);
-		assertNull(builder.retrieveFirstRoot());
+		assertNull(builder.retrieveFirst());
 		builder.add(1);
 		assertEquals(0,builder.size());
 		assertEquals(0,builder.treeSize());
@@ -20,19 +20,19 @@ public class MTreeBuilderTest {
 		}catch(NoCompleteException e){
 		}
 		try{
-			builder.retrieveFirstRoot();
+			builder.retrieveFirst();
 			assertTrue(false);
 		}catch(NoCompleteException e){
 		}
 		cleanTest(builder);
 		
 		builder = new MTreeBuilder<>(TestUtil.raySerialConditionToBuild,new IgnoreNoCompleteHandler());
-		assertNull(builder.retrieveFirstRoot());
+		assertNull(builder.retrieveFirst());
 		builder.add(1);
 		assertEquals(0,builder.size());
 		assertEquals(0,builder.treeSize());
 		scrapTest(builder, 1);
-		assertNull(builder.retrieveFirstRoot());
+		assertNull(builder.retrieveFirst());
 		iteratorTest(builder);
 		
 		cleanTest(builder);
@@ -41,7 +41,7 @@ public class MTreeBuilderTest {
 	
 	@Test
 	public void simple(){
-		MTreeBuilder<Integer> builder = new MTreeBuilder<>(TestUtil.serialConditionToBuild);
+		MTreeBuilder<Integer> builder = new MTreeBuilder<>(TestUtil.serialCondition);
 		builder.add(0);
 		scrapTest(builder);
 		iteratorTest(builder, new Object[]{0});
@@ -99,11 +99,11 @@ public class MTreeBuilderTest {
 	private <E> void iteratorTest(MTreeBuilder<E> builder,Object[]... eachTree){
 		assertEquals(eachTree.length,builder.treeSize());
 		int rootCount = 0;
-		for(TreeNode<E> root : builder.retrieve()){
+		for(CTree<E> tree : builder.retrieve()){
 			Object[] atree = eachTree[rootCount];
-			assertEquals(atree.length , root.size());
+			assertEquals(atree.length , tree.size());
 			int i = 0;
-			for(E e : root){
+			for(E e : tree){
 				assertEquals(atree[i++],e);
 			}
 			rootCount ++;
@@ -130,7 +130,7 @@ public class MTreeBuilderTest {
 		builder.clear();
 		iteratorTest(builder);
 		scrapTest(builder);
-		assertNull(builder.retrieveFirstRoot());
+		assertNull(builder.retrieveFirst());
 	}
 	
 }

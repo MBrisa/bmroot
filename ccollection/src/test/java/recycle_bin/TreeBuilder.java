@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.mbrisa.ccollection.BuildingCondition;
+import org.mbrisa.ccollection.LinkedCondition;
 import org.mbrisa.ccollection.NoCompleteException;
 import org.mbrisa.ccollection.NodeRepeatException;
 import org.mbrisa.ccollection.TreeNode;
@@ -13,7 +13,7 @@ import org.mbrisa.ccollection.TreeNode;
 public class TreeBuilder<E> {
 	
 	private int nodeSize = 0;
-	private final BuildingCondition<E> condition;
+	private final LinkedCondition<E> condition;
 	private final NodeRepeatHandler<E> conflictHandler;
 	
 	private final List<TreeNode<E>> rootNodes = new LinkedList<>();
@@ -21,17 +21,18 @@ public class TreeBuilder<E> {
 	private final List<TreeNode<E>> scrap = new ArrayList<>();
 	private final HashMap<E,List<TreeNode<E>>> scrapLog = new HashMap<>();
 	
-	public TreeBuilder(BuildingCondition<E> condition) {
+	public TreeBuilder(LinkedCondition<E> condition) {
 		this(condition, new SingleNodeHandler<E>());
 	}
 	
-	public TreeBuilder(BuildingCondition<E> condition,NodeRepeatHandler<E> conflictHandler) {
+	public TreeBuilder(LinkedCondition<E> condition,NodeRepeatHandler<E> conflictHandler) {
 		this.condition = condition;
 		this.conflictHandler = conflictHandler;
 	}
 	
 	public void add(E node){
-		TreeNode<E> addition = new TreeNode<>(node,this.condition);
+		TreeNode<E> addition = new TreeNode<>(node);
+//		TreeNode<E> addition = new TreeNode<>(node,this.condition);
 		
 		if((this.log.get(node) != null || this.scrapLog.get(node) != null) && !this.conflictHandler.repeatable()){
 			throw new NodeRepeatException("node was duplicate");
