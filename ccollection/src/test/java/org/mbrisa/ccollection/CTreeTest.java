@@ -115,18 +115,33 @@ public class CTreeTest {
 		cTree2.add(3);
 		assertFalse(cTree.add(cTree2));
 		iteratorTest(cTree, 1);
+		assertFalse(cTree2.isSubtree());
 		
 		cTree2.add(2);
 		assertTrue(cTree.add(cTree2));
 		iteratorTest(cTree, 1,2,3);
+		assertTrue(cTree2.isSubtree());
+		
+		cTree2.add(4);
+		iteratorTest(cTree, 1,2,3,4);
+		iteratorTest(cTree2, 2,3,4);
+		
+		assertFalse(cTree2.add(0));
+		assertTrue(cTree.add(0));
+		iteratorTest(cTree, 0,1,2,3,4);
+		iteratorTest(cTree2, 2,3,4);
 		
 		cTree = new CTree<Integer>(TestUtil.serialCondition);
-		cTree.add(cTree2);
-		iteratorTest(cTree, 2,3);
+		try{
+			cTree.add(cTree2);
+			assertTrue(false); // cTree2 was subTree already
+		}catch(NodeConflictException e){
+		}
+		iteratorTest(cTree);
 		
 		CTree<Integer> cTree3 = new CTree<Integer>(TestUtil.serialCondition);
 		assertFalse(cTree.add(cTree3));
-		iteratorTest(cTree, 2,3);
+		iteratorTest(cTree);
 		
 		cTree = new CTree<Integer>(TestUtil.serialCondition);
 		assertFalse(cTree.add(cTree3));

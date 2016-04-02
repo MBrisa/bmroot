@@ -42,7 +42,7 @@ public class CTree<E> implements Collection<E> {
 			return false;
 		}
 		//首先尝试将 addition 作为 root 进行添加，因为这个过程不需要对原有 root 进行迭代。
-		if(this.condition.headable(addition.entity()) && this.condition.appendable(addition.entity(), this.root.entity()) && addition.add(this.root)){ // first try to become a root
+		if(!this.isSubtree() && this.condition.headable(addition.entity()) && this.condition.appendable(addition.entity(), this.root.entity()) && addition.add(this.root)){ // first try to become a root
 			this.root = addition;
 			this.setLastAddition(addition);
 			return true;
@@ -62,6 +62,9 @@ public class CTree<E> implements Collection<E> {
 		if(tr == null){
 			return false;
 		}
+		if(target.isSubtree()){
+			throw new NodeConflictException("the param "+target+" was a sub tree already"); 
+		}
 		if(this.root == null){
 			this.root = target.root;
 			return true;
@@ -70,7 +73,6 @@ public class CTree<E> implements Collection<E> {
 	}
 	
 	private boolean addToChild(TreeNode<E> addition){
-		assert(addition.getParent() == null);
 		for(TreeNode<E> node : this.root.retrieveAllNode()){
 			if(this.condition.appendable(node.entity(), addition.entity())){ // addition is child
 				return node.add(addition); //must be true //NOTE: 与 chain 不同 addition “整体”添加到了一个指定位置。
@@ -88,6 +90,10 @@ public class CTree<E> implements Collection<E> {
 
 	private void setLastAddition(TreeNode<E> lastAddition) {
 		this.lastAddition = lastAddition;
+	}
+	
+	public boolean isSubtree(){
+		return this.root != null && this.root.getParent() != null;
 	}
 	
 	/* (non-Javadoc)

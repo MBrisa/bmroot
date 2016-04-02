@@ -26,9 +26,9 @@ public class MTreeBuilder<E> implements CCBuilder<E> {
 		
 		for(CTree<E> tree : this.treeList){
 			if(tree.add(node)){
-				ArrayList<TreeNode<E>> newAddition = new ArrayList<>();
-				newAddition.add(tree.getLastAddition());
-				this.reLink(tree,newAddition,true);
+//				ArrayList<TreeNode<E>> newAddition = new ArrayList<>();
+//				newAddition.add(tree.getLastAddition());
+				this.reLink(tree);
 				return;
 			}
 		}
@@ -36,7 +36,7 @@ public class MTreeBuilder<E> implements CCBuilder<E> {
 		if(cTree.add(node)){
 			this.treeList.add(cTree);
 			if(!this.scrap.isEmpty()){ // all chain can not link the new node.so if scrap is empty ,no need relink on old chain
-				this.reLink();
+				this.reLink(cTree);
 			}
 			return;
 		}
@@ -44,90 +44,46 @@ public class MTreeBuilder<E> implements CCBuilder<E> {
 		
 	}
 	
-	//因为可读性较差、数据操作层次不明显，所以可暂不使用 TreeNode 进行连接操作。如果有性能需要可以让 relink 只发生在最后添加的 TreeNode上。 
-	private void reLink(CTree<E> lastActionTree,List<TreeNode<E>> newAddition,boolean noScrap) {
+	private void reLink(CTree<E> lastActionTree/*,List<TreeNode<E>> newAddition*/) {
 		if(this.scrap.size() > 0){
-			if(noScrap){// noScrap 为 true 说明没有从 this.scrap 中添加节点，此时因为除了 lastAddition 外，scrap 中的数据不可能与该 builder 中任意tree的任意节点连接，所以只需与 lastAddition 进行匹配。
-				for(E e : this.scrap){
-					if(this.condition.appendable(newAddition.entity(), e)){
-						newAddition.add(e);
-						reLink(lastActionTree, newAddition, false);
-					}
-				}
-			}else{
-				
-			}
-			for(E e : this.scrap){
-				if(lastActionTree.add(e)){ // 
+			for(E e : this.scrap){ 
+				if(lastActionTree.add(e)){ //因为可读性较差、数据操作层次不明显，所以可暂不使用 TreeNode 进行连接操作。如果有性能需要可以让 relink 只发生在最后添加的 TreeNode上，此时在对 scrap 进行添加时需要一个 newAddition 列表，且每从 scrap 中添加一个元素，该 newAddition 都要对应的添加此次增加的 TreeNode
+											//XXX: 可以考虑在 CTree 上添加一个在指定节点进行添加新元素的方法
 					this.scrap.remove(e);
-					reLink(tree,);
+//					newAddition.add(lastActionTree.getLastAddition());
+					reLink(lastActionTree);
 					return;
 				}
 			}
 		}
 		
-		if(this.treeList.size() > 1){
-			for(int i = 0;i < this.treeList.size(); i++){
-				CTree<E> treeI = this.treeList.get(i);
-				
-				for(int j = 0; j < this.treeList.size(); j++){
-					if(i == j){
-						continue;
-					}
-					CTree<E> treeJ = this.treeList.get(j);
-					try {
-						if(treeI.add(treeJ)){
-							this.treeList.remove(j);
-							reLink();
-							return ;
-						}
-					} catch (NoCompatibilityException e) {
-						assert(false);// must compatible with same chainCondition
-					}
+		if(lastActionTree.isSubtree()){
+			for(CTree<E> tree : this.treeList){
+				if(tree == lastActionTree){
+					continue;
+				}
+				if(lastActionTree.add(tree)){ 
+					this.treeList.remove(tree);
+					reLink(lastActionTree);
+					return ;
+				}
+			}
+		}else{
+			for(CTree<E> tree : this.treeList){
+				if(tree == lastActionTree){
+					continue;
+				}
+				CTree<E> toRemoved = tree.add(lastActionTree) ? lastActionTree : (lastActionTree.add(tree) ? tree : null); // 为了避免尝试两个 Tree 的交替添加，首先试图将 lastActionTree 变成一个 subtree
+				if(toRemoved != null){
+					this.treeList.remove(toRemoved);
+					reLink(lastActionTree);
+					return;
 				}
 			}
 		}
+		
 	}
 	
-//	private RelinkStrategy toAdd(TreeNode<E> addition){
-//		assert(addition.getParent() == null);
-//		assert(addition.size() ==1);
-//		for(TreeNode<E> root : rootNodes){
-//			//首先将 addition 作为 root 进行添加，因为这个过程不需要对原有 root 进行迭代。
-//			if(addition.add(root)){ // addition is root
-//				upsertRoot(addition, root);
-//				return RelinkStrategy.RELINK_EACH_OTHER;
-//			}
-//			for(TreeNode<E> node : root.retrieveAllNode()){
-//				if(node.add(addition)){ // addition is child
-//					return RelinkStrategy.PULL_OTHER;
-//				}
-//			}
-//		}
-//		if(this.condition.headable(addition.entity())){//to here the addition can not link to the existing tree,so try to create a new tree
-//			upsertRoot(addition, null);
-//			if(this.scrap.size() > 0){
-//				return RelinkStrategy.SCRAP_NOLY;
-//			}
-//			return RelinkStrategy.NO_RELINK;
-//		}
-//		return RelinkStrategy.NO_ADDED;
-//	}
-	
-	
-//	private void upsertRoot(TreeNode<E> addition, TreeNode<E> original){
-//		if(original != null){
-//			this.removeRoot(original);
-//		}
-//		this.rootNodes.add(addition);
-//	}
-	
-//	private void removeRoot(TreeNode<E> root){
-//		if(!this.rootNodes.remove(root) ){
-//			assert(false);// must exist original in rootNodes and must addable
-//			throw new RuntimeException("..");
-//		}
-//	}
 	
 	public int treeSize(){
 		return this.treeList.size();
@@ -177,102 +133,4 @@ public class MTreeBuilder<E> implements CCBuilder<E> {
 	public boolean isComplete(){
 		return this.scrap.size() == 0;
 	}
-	/*
-	private static enum RelinkStrategy{
-		NO_ADDED,
-		
-		NO_RELINK{
-			@Override
-			public boolean added() {
-				return true;
-			}
-			@Override
-			public <E> void handle(MTreeBuilder<E> builder,
-					TreeNode<E> lastAddition) {
-				// do nothing
-			}
-		},
-		
-		SCRAP_NOLY{
-			@Override
-			public boolean added() {
-				return true;
-			}
-			
-			@Override
-			public <E> void handle(MTreeBuilder<E> builder,TreeNode<E> lastAddition) {
-				for(TreeNode<E> node : builder.scrap){
-					RelinkStrategy state = builder.toAdd(node);
-					if(state.added()){
-						builder.scrap.remove(node);
-						state.handle(builder,node);
-						return ;
-					}
-				}
-			}
-		},
-		
-		RELINK_EACH_OTHER{
-			@Override
-			public boolean added() {
-				return true;
-			}
-			
-			@Override
-			public <E> void handle(MTreeBuilder<E> builder,TreeNode<E> lastAddition) {
-				assert(lastAddition.getParent() == null);
-				for(TreeNode<E> root : builder.rootNodes){
-					if(root == lastAddition){
-						continue;
-					}
-					if(lastAddition.add(root)){
-						builder.removeRoot(root);
-						this.handle(builder, lastAddition);
-						return;
-					}
-					for(TreeNode<E> node : root.retrieveAllNode()){
-						if(node.add(lastAddition)){
-							builder.removeRoot(lastAddition);
-							PULL_OTHER.handle(builder, lastAddition);
-							return;
-						}
-					}
-				}
-				SCRAP_NOLY.handle(builder, lastAddition);
-			}
-			
-		},
-		
-		PULL_OTHER{
-			@Override
-			public boolean added() {
-				return true;
-			}
-			
-			@Override
-			public <E> void handle(MTreeBuilder<E> builder, TreeNode<E> lastAddition) {
-				assert(lastAddition.getParent() != null);
-				for(TreeNode<E> root : builder.rootNodes){
-					if(lastAddition.getRoot() == root){
-						continue;
-					}
-					if(lastAddition.add(root)){
-						builder.removeRoot(root);
-						this.handle(builder, lastAddition);
-						return;
-					}
-				}
-				SCRAP_NOLY.handle(builder, lastAddition);
-			}
-		};
-		
-		public boolean added(){
-			return false;
-		}
-		
-		public <E> void handle(MTreeBuilder<E> builder,TreeNode<E> lastAddition) {
-			throw new UnsupportedOperationException();
-		}
-		
-	}*/
 }
