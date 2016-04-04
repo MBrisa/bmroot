@@ -12,31 +12,14 @@ public class TreeNode<E> implements Cloneable, Iterable<TreeNode<E>> {
 	private int indexInParent = -1; // 该值是当前节点在其父节点 allNodes 中的 index 。当前节点如果没有父节点，该值为 -1 ，如果有父节点该值大于0
 	private List<DCIndex> dcis = new ArrayList<>(); // direct children index in allNodex
 	private final E e;
-//	private final LinkedCondition<E> condition;
-	LinkedList<TreeNode<E>> allNodes = new LinkedList<TreeNode<E>>(); 
+	private LinkedList<TreeNode<E>> allNodes = new LinkedList<TreeNode<E>>(); 
 	
 
-//	@SuppressWarnings("unchecked")
-//	public TreeNode(E e) { 
-//		this(e, NoLimitLinkedCondition.getInstance());
-//	}
-	
-	public TreeNode(E e/*,LinkedCondition<E> condition*/) {
-//		if(e == null && condition.rejectNull()){
-//			throw new NullPointerException();
-//		}
+	public TreeNode(E e) {
 		this.e = e;
-//		this.condition = condition;
 		this.allNodes.add(this);
 //		this.root = this;
 	}
-	
-//	/**
-//	 * @return the condition
-//	 */
-//	public LinkedCondition<E> getCondition() {
-//		return condition;
-//	}
 	
 
 	public boolean add(TreeNode<E> child){
@@ -44,12 +27,10 @@ public class TreeNode<E> implements Cloneable, Iterable<TreeNode<E>> {
 			throw new NullPointerException();
 		if(child == this)
 			throw new NodeConflictException("can not add self.");
-//		if(!this.condition.equals(target.condition))
-//			throw new NoCompatibilityException("LinkCondition is not equals");
 		if(child.getParent() != null) 
 			return false;
 //			throw new NodeConflictException("target: ["+ child +"] exists parent already.");
-//		if(this.allNodes.contains(target) || target.allNodes.contains(this)) //不需做次检查，如果 target 不存在 parent 其一定不会再当前的 allNodes 列表中
+//		if(this.allNodes.contains(target) || target.allNodes.contains(this)) //不需做次检查，如果 target 不存在 parent， 其一定不会再当前的 allNodes 列表中
 //			throw new NodeConflictException("target: ["+ target +"] is current node, or relation was create already");
 		return addToChild(child);
 	}
@@ -61,9 +42,6 @@ public class TreeNode<E> implements Cloneable, Iterable<TreeNode<E>> {
 	}
 	
 	private boolean addToChild(TreeNode<E> child){
-//		if(!this.condition.appendable(this.entity(), child.entity())){
-//			return false;
-//		}
 		child.setParent(this);
 //		child.setRoot(this.getRoot());
 //		for(TreeNode<E> cc : child.retrieveAllNode()){
@@ -142,10 +120,6 @@ public class TreeNode<E> implements Cloneable, Iterable<TreeNode<E>> {
 		return this.getParent() == null;
 	}
 	
-	List<TreeNode<E>> retrieveAllNode(){
-		return new ArrayList<>(this.allNodes);
-	}
-
 	private void setParent(TreeNode<E> parent) {
 		this.parent = parent;
 	}

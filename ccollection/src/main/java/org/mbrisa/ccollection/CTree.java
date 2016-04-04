@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public class CTree<E> implements Collection<E> {
+public class CTree<E> implements Collection<E>, Cloneable {
 	
 	private TreeNode<E> root; //在对外返回任何一个 TreeNode 时，应该返回 TreeNode 的 clone,以保证 TreeNode 不会被外部修改。
 	private TreeNode<E> lastAddition;
@@ -73,7 +73,7 @@ public class CTree<E> implements Collection<E> {
 	}
 	
 	private boolean addToChild(TreeNode<E> addition){
-		for(TreeNode<E> node : this.root.retrieveAllNode()){
+		for(TreeNode<E> node : this.root){
 			if(this.condition.appendable(node.entity(), addition.entity())){ // addition is child
 				return node.add(addition); //must be true //NOTE: 与 chain 不同 addition “整体”添加到了一个指定位置。
 			}
@@ -101,7 +101,7 @@ public class CTree<E> implements Collection<E> {
 	 */
 	@Override
 	public int size() {
-		return this.root == null ? 0 : this.root.allNodes.size();
+		return this.root == null ? 0 : this.root.size();
 	}
 
 	/* (non-Javadoc)
@@ -154,7 +154,7 @@ public class CTree<E> implements Collection<E> {
 			return result;
 		
         int i = 0;
-        for(TreeNode<E> node : this.root.allNodes)
+        for(TreeNode<E> node : this.root)
         	 result[i++] = node.entity();
         return result;
 	}
@@ -173,7 +173,7 @@ public class CTree<E> implements Collection<E> {
             a = (T[])java.lang.reflect.Array.newInstance(a.getClass().getComponentType(), this.size());
         int i = 0;
         Object[] result = a;
-        for(TreeNode<E> node : this.root.allNodes)
+        for(TreeNode<E> node : this.root)
             result[i++] = node.entity();
 
         if (a.length > this.size())
@@ -251,7 +251,7 @@ public class CTree<E> implements Collection<E> {
     }
     
     private class EIterator implements Iterator<E>{
-		private Iterator<TreeNode<E>> iterator = CTree.this.root.allNodes.iterator();
+		private Iterator<TreeNode<E>> iterator = CTree.this.root.iterator();
 		@Override
 		public boolean hasNext() {
 			return iterator.hasNext();
@@ -267,5 +267,18 @@ public class CTree<E> implements Collection<E> {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
+	@Override
+	protected CTree<E> clone() {
+		CTree<E> cloned;
+		try {
+			cloned = (CTree<E>)super.clone();
+		} catch (CloneNotSupportedException e) {
+			throw new InternalError(e);
+		}
+		cloned.root = cloned.root == null ? null : cloned.root.clone();
+		cloned.lastAddition = cloned.lastAddition == null ? null : cloned.lastAddition.clone();
+		return cloned;
+	}
 	
 }
