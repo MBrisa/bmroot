@@ -274,7 +274,7 @@ public class CTree<E> implements Collection<E>, Cloneable {
 		try {
 			cloned = (CTree<E>)super.clone();
 		} catch (CloneNotSupportedException e) {
-			throw new InternalError(e);
+			throw new InternalError();
 		}
 		cloned.root = cloned.root == null ? null : cloned.root.clone();
 		cloned.lastAddition = cloned.lastAddition == null ? null : cloned.lastAddition.clone();
