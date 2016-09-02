@@ -6,6 +6,7 @@
 	<packaging>pom</packaging>
 	<modules>
 		<module>ccollection</module>
+		<module>wxmessage</module>
 	</modules>
 	
 	<properties>
